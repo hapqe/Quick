@@ -7,13 +7,13 @@ using UnityEngine;
 public static class MoveTool
 {
     static bool flipYZ = true;
-    
+
     static MoveTool()
     {
         SceneView.duringSceneGui += OnScene;
     }
 
-    static bool moving = false;
+    public static bool moving { get; private set; } = false;
     static Vector3[] initial;
     static Vector3 start;
     static Vector3 mean;
@@ -25,7 +25,7 @@ public static class MoveTool
     {
         Event e = Event.current;
 
-        if(e.alt) return;
+        if (e.alt) return;
 
         var sel = Selection.gameObjects;
 
@@ -63,16 +63,16 @@ public static class MoveTool
 
         for (int i = 0; i < sel.Length; i++)
         {
-            if(input == "")
-            sel[i].transform.position = initial[i] + Vector3.Scale(delta, mask);
+            if (input == "")
+                sel[i].transform.position = initial[i] + Vector3.Scale(delta, mask);
             else
             {
                 float d = float.Parse(input);
-                if(mask.magnitude != 1f)
-                // x axis
-                sel[i].transform.position = initial[i] + new Vector3(d, 0, 0);
+                if (mask.magnitude != 1f)
+                    // x axis
+                    sel[i].transform.position = initial[i] + new Vector3(d, 0, 0);
                 else
-                sel[i].transform.position = initial[i] + mask * d;
+                    sel[i].transform.position = initial[i] + mask * d;
             }
         }
 
@@ -94,7 +94,7 @@ public static class MoveTool
         }
 
         // lmb or enter
-        if (e.type == EventType.MouseDown && e.button == 0  || e.type == EventType.KeyDown && e.keyCode == KeyCode.Return)
+        if (e.type == EventType.MouseDown && e.button == 0 || e.type == EventType.KeyDown && e.keyCode == KeyCode.Return)
         {
             e.Use();
 
@@ -155,7 +155,7 @@ public static class MoveTool
         if (e.type == EventType.MouseDrag && e.button == 2)
         {
             EditorHelpers.GetDrawer<MoveGizmos>().showAll = true;
-            
+
             var d = delta.normalized;
             var axes = new Vector3[] { Vector3.right, Vector3.up, Vector3.forward };
             var best = 0;
@@ -165,7 +165,7 @@ public static class MoveTool
                 var normal = Camera.current.transform.forward;
                 var p = Vector3.ProjectOnPlane(axes[i], normal);
                 p.Normalize();
-                
+
                 var dot = Mathf.Abs(Vector3.Dot(d, p));
                 if (dot > bestDot)
                 {
@@ -174,7 +174,7 @@ public static class MoveTool
                 }
             }
             var axis = axes[best];
-            if(e.shift) 
+            if (e.shift)
                 mask = Vector3.one - axis;
             else
                 mask = axis;
@@ -188,7 +188,7 @@ public static class MoveTool
         if (e.type == EventType.KeyDown)
         {
             e.Use();
-            
+
             // append to input
             if (e.keyCode >= KeyCode.Alpha0 && e.keyCode <= KeyCode.Alpha9)
                 input += (char)('0' + (e.keyCode - KeyCode.Alpha0));

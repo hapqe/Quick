@@ -5,6 +5,12 @@ using UnityEngine;
 
 public static class EditorHelpers
 {
+    public static bool isInAction {
+        get {
+            return MoveTool.moving;
+        }
+    }
+    
     public static void Record(System.Func<GameObject, Object> action = null) {
         action = action ?? (go => go.transform);
         var selection = Selection.gameObjects;
