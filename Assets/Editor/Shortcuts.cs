@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using static EditorHelpers;
 
 [InitializeOnLoad]
 public static class Shortcuts
@@ -9,17 +10,6 @@ public static class Shortcuts
     static Shortcuts()
     {
         SceneView.duringSceneGui += OnScene;
-    }
-
-    private static void Record() {
-        var selection = Selection.gameObjects;
-        foreach(var go in selection) {
-            Undo.RecordObject(go.transform, "Transform");
-        }
-    }
-
-    private static void Collapse() {
-        Undo.CollapseUndoOperations(Undo.GetCurrentGroup());
     }
 
     private static void OnScene(SceneView sceneView){
@@ -81,6 +71,31 @@ public static class Shortcuts
                 (p as GameObject).transform.position = Cursor.position;
             }
             Undo.RegisterCreatedObjectUndo(p, "Create Prefab");
+        }
+
+        // ctrl-l
+        if(e.control && e.type == EventType.KeyDown && e.keyCode == KeyCode.L) {
+            e.Use();
+
+            var sel = Selection.gameObjects;
+            if(sel.Length == 0) return;
+
+            var active = Selection.activeGameObject;
+
+            var activeMat = active.GetComponent<Renderer>()?.sharedMaterial;
+
+            if(activeMat == null) return;
+
+            foreach(var go in sel) {
+                var rend = go.GetComponent<Renderer>();
+                if(rend == null) continue;
+
+                Undo.RecordObject(rend, "Set Material");
+
+                rend.sharedMaterial = activeMat;
+            }
+
+            Collapse();
         }
     }
 }
