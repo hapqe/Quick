@@ -71,6 +71,10 @@ public static class Shortcuts
                 (p as GameObject).transform.position = Cursor.position;
             }
             Undo.RegisterCreatedObjectUndo(p, "Create Prefab");
+
+            Selection.activeGameObject = null;
+            if(p as GameObject != null)
+            Selection.activeGameObject = p as GameObject;
         }
 
         // ctrl-l

@@ -30,6 +30,8 @@ public static class DeleteTool
             return;
         }
 
+        if(!prompting) return;
+
         // enter, 1, d
         if(d && (k == KeyCode.Return || k == KeyCode.Alpha1 || k == KeyCode.D)) {
             Event.current.Use();
