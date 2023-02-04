@@ -14,9 +14,12 @@ public static class Shortcuts
 
     private static void OnScene(SceneView sceneView){
         Event e = Event.current;
+        var k = e.keyCode;
+        var d = e.type == EventType.KeyDown;
+        var m = e.type == EventType.MouseDown;
         
         // alt-g
-        if(e.alt && e.type == EventType.KeyDown && e.keyCode == KeyCode.G) {
+        if(e.alt && d && e.keyCode == KeyCode.G) {
             e.Use();
             
             var selection = Selection.gameObjects;
@@ -30,7 +33,7 @@ public static class Shortcuts
         }
 
         // alt-s
-        if(e.alt && e.type == EventType.KeyDown && e.keyCode == KeyCode.S) {
+        if(e.alt && d && k == KeyCode.S) {
             e.Use();
             
             var selection = Selection.gameObjects;
@@ -44,7 +47,7 @@ public static class Shortcuts
         }
 
         // alt-r
-        if(e.alt && e.type == EventType.KeyDown && e.keyCode == KeyCode.R) {
+        if(e.alt && d && k == KeyCode.R) {
             e.Use();
 
             var selection = Selection.gameObjects;
@@ -58,8 +61,8 @@ public static class Shortcuts
         }
 
         // shift-number
-        if(e.shift && e.type == EventType.KeyDown) {
-            var number = e.keyCode - KeyCode.Alpha0;
+        if(e.shift && d) {
+            var number = k - KeyCode.Alpha0;
             if(!(number >= 0 && number <= 9))   return;
             
             EditorApplication.ExecuteMenuItem("Edit/Selection/Load Selection " + number);
@@ -78,7 +81,7 @@ public static class Shortcuts
         }
 
         // ctrl-l
-        if(e.control && e.type == EventType.KeyDown && e.keyCode == KeyCode.L) {
+        if(e.control && d && e.keyCode == KeyCode.L) {
             e.Use();
 
             var sel = Selection.gameObjects;
