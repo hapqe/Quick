@@ -18,6 +18,7 @@ public static class MoveUnder
         var e = Event.current;
         var k = e.keyCode;
         var d = e.type == EventType.KeyDown;
+        var m = e.type == EventType.MouseDown;
         
         // m
         if(d && k == KeyCode.M) {
@@ -50,14 +51,14 @@ public static class MoveUnder
         }
 
         // esc or rmb
-        if(d && (k == KeyCode.Escape || e.isMouse && e.button == 1)) {
+        if(d && k == KeyCode.Escape || m && e.button == 1) {
             Event.current.Use();
             typing = false;
             name = "";
         }
 
         // enter or lmb
-        if(d && (k == KeyCode.Return || e.isMouse && e.button == 0)) {
+        if(d && k == KeyCode.Return || m && e.button == 0) {
             Event.current.Use();
             typing = false;
             var selection = Selection.gameObjects;

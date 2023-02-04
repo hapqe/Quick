@@ -20,6 +20,7 @@ public static class DeleteTool
         var e = Event.current;
         var k = e.keyCode;
         var d = e.type == EventType.KeyDown;
+        var m = e.type == EventType.MouseDown;
         
         // x
         if(d && k == KeyCode.X) {
@@ -33,7 +34,7 @@ public static class DeleteTool
         if(!prompting) return;
 
         // enter, 1, d
-        if(d && (k == KeyCode.Return || k == KeyCode.Alpha1 || k == KeyCode.D)) {
+        if((d && (k == KeyCode.Return || k == KeyCode.Alpha1 || k == KeyCode.D)) || m && e.button == 0) {
             Event.current.Use();
             prompting = false;
             var selection = Selection.gameObjects;
@@ -46,7 +47,7 @@ public static class DeleteTool
         }
 
         // esc or lmb
-        if(d && (k == KeyCode.Escape || e.isMouse && e.button == 1)) {
+        if(d && k == KeyCode.Escape || m && e.button == 1) {
             Event.current.Use();
             prompting = false;
         }
