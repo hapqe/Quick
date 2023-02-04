@@ -61,14 +61,16 @@ public static class MoveUnder
             Event.current.Use();
             typing = false;
             var selection = Selection.gameObjects;
+            var parent = GameObject.Find(name);
+            if(parent == null) {
+                parent = new GameObject(name);
+                Undo.RegisterCreatedObjectUndo(parent, "Move Under");
+            }
             foreach(var go in selection) {
-                var parent = GameObject.Find(name);
-                if(parent == null) {
-                    parent = new GameObject(name);
-                    Undo.RegisterCreatedObjectUndo(parent, "Move Under");
-                }
                 Undo.SetTransformParent(go.transform, parent.transform, "Move Under");
             }
+            Selection.activeGameObject = null;
+            Selection.activeGameObject = parent;
             Collapse();
             name = "";
         }
