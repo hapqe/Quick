@@ -25,6 +25,8 @@ public static class MoveTool
     {
         Event e = Event.current;
 
+        if(e.alt) return;
+
         var sel = Selection.gameObjects;
 
         // g

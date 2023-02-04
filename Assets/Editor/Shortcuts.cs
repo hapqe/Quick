@@ -11,37 +11,60 @@ public static class Shortcuts
         SceneView.duringSceneGui += OnScene;
     }
 
+    private static void Record() {
+        var selection = Selection.gameObjects;
+        foreach(var go in selection) {
+            Undo.RecordObject(go.transform, "Transform");
+        }
+    }
+
+    private static void Collapse() {
+        Undo.CollapseUndoOperations(Undo.GetCurrentGroup());
+    }
+
     private static void OnScene(SceneView sceneView){
         Event e = Event.current;
         
-        // shift-g
-        if(e.shift && e.type == EventType.KeyDown && e.keyCode == KeyCode.G) {
+        // alt-g
+        if(e.alt && e.type == EventType.KeyDown && e.keyCode == KeyCode.G) {
+            e.Use();
+            
             var selection = Selection.gameObjects;
 
+            Record();
             foreach(var go in selection) {
                 // set position to 0,0,0
                 go.transform.localPosition = Vector3.zero;
             }
+            Collapse();
         }
 
-        // shift-s
-        if(e.shift && e.type == EventType.KeyDown && e.keyCode == KeyCode.S) {
+        // alt-s
+        if(e.alt && e.type == EventType.KeyDown && e.keyCode == KeyCode.S) {
+            e.Use();
+            
             var selection = Selection.gameObjects;
 
+            Record();
             foreach(var go in selection) {
                 // set scale to 1,1,1
                 go.transform.localScale = Vector3.one;
             }
+            Collapse();
         }
 
-        // shift-r
-        if(e.shift && e.type == EventType.KeyDown && e.keyCode == KeyCode.R) {
+        // alt-r
+        if(e.alt && e.type == EventType.KeyDown && e.keyCode == KeyCode.R) {
+            e.Use();
+
             var selection = Selection.gameObjects;
 
+            Record();
             foreach(var go in selection) {
                 // set rotation to 0,0,0
                 go.transform.localEulerAngles = Vector3.zero;
             }
+            Collapse();
         }
 
         // shift-number

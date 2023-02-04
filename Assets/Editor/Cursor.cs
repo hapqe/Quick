@@ -19,8 +19,10 @@ public static class Cursor
         if(!e.shift) return;
         
         // shift-lmb
-        if (e.type == EventType.MouseDown && e.button == 1)
+        if ((e.type == EventType.MouseDown || e.type == EventType.MouseDrag) && e.button == 1)
         {
+            e.Use();
+
             var ray = HandleUtility.GUIPointToWorldRay(e.mousePosition);
             var renderers = GameObject.FindObjectsOfType<MeshFilter>();
             var hits = new List<RaycastHit>();
