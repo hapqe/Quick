@@ -18,7 +18,7 @@ public static class Cursor
         Event e = Event.current;
         if(!e.shift) {
             // c
-            if(e.type == EventType.KeyDown && e.keyCode == KeyCode.C) {
+            if(e.type == EventType.KeyDown && e.keyCode == KeyCode.Y) {
                 e.Use();
                 PivotDropdown.CycleMode();
             }

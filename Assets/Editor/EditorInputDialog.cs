@@ -56,13 +56,13 @@ public class EditorInputDialog : EditorWindow
             minSize = maxSize = rect.size;
         }
 
-        // // Set dialog position next to mouse position
-        // if (!initializedPosition)
-        // {
-        //     var mousePos = GUIUtility.GUIToScreenPoint(Event.current.mousePosition);
-        //     position = new Rect(mousePos.x + 32, mousePos.y, position.width, position.height);
-        //     initializedPosition = true;
-        // }
+        // Set dialog position next to mouse position
+        if (!initializedPosition)
+        {
+            var mousePos = GUIUtility.GUIToScreenPoint(Event.current.mousePosition);
+            position = new Rect(mousePos.x + 32, mousePos.y, position.width, position.height);
+            initializedPosition = true;
+        }
     }
     #endregion OnGUI()
 

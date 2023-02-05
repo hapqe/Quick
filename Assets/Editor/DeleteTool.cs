@@ -15,7 +15,6 @@ public static class DeleteTool
 
     private static void OnScene(SceneView sceneView){
         if(Selection.objects.Length == 0) return;
-        if(EditorHelpers.isInAction) return;
         
         var e = Event.current;
         var k = e.keyCode;
