@@ -2,10 +2,13 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using static EditorHelpers;
 
 [InitializeOnLoad]
 public static class MoveTool
 {
+    static string toolName = "move";
+    
     static bool flipYZ = true;
 
     static MoveTool()
@@ -23,6 +26,8 @@ public static class MoveTool
 
     private static void OnScene(SceneView sceneView)
     {
+        if(action != toolName && isInAction) return;
+        
         Event e = Event.current;
 
         if (e.alt) return;
@@ -32,14 +37,10 @@ public static class MoveTool
         // g
         if (e.type == EventType.KeyDown && e.keyCode == KeyCode.G)
         {
+            action = toolName;
+            
             if (sel.Length == 0) return;
             moving = true;
-
-            // undo
-            foreach (var go in sel)
-            {
-                Undo.RecordObject(go.transform, "Move");
-            }
 
             initial = new Vector3[sel.Length];
             for (int i = 0; i < sel.Length; i++)
@@ -90,24 +91,38 @@ public static class MoveTool
             EditorHelpers.GetDrawer<MoveGizmos>().showAll = false;
             EditorHelpers.GetDrawer<MoveGizmos>().mask = Vector3.one;
 
+            action = "";
             return;
         }
 
         // lmb or enter
         if (e.type == EventType.MouseDown && e.button == 0 || e.type == EventType.KeyDown && e.keyCode == KeyCode.Return)
         {
-            e.Use();
-
-            // undo
+            for (int i = 0; i < sel.Length; i++)
+            {
+                var now = sel[i].transform.position;
+                sel[i].transform.position = initial[i];
+                Undo.RecordObject(sel[i].transform, "Move");
+                sel[i].transform.position = now;
+            }
+            
             Undo.CollapseUndoOperations(Undo.GetCurrentGroup());
+            
+            e.Use();
 
             moving = false;
 
             EditorHelpers.GetDrawer<MoveGizmos>().showAll = false;
             EditorHelpers.GetDrawer<MoveGizmos>().mask = Vector3.one;
 
+            action = "";
             return;
         }
+
+        // get, if unity's transforms are in local space
+        var mode = Tools.pivotRotation;
+
+        Debug.Log(mode);
 
         // x
         if (e.type == EventType.KeyDown && e.keyCode == KeyCode.X)

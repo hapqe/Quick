@@ -41,10 +41,9 @@ public static class PrefabHandler
         }
     }
 
+    // https://docs.unity3d.com/ScriptReference/PrefabUtility.html
     static void CreatePrefab()
     {
-        // https://docs.unity3d.com/ScriptReference/PrefabUtility.html
-
         var objectArray = Selection.gameObjects;
 
         foreach (GameObject gameObject in objectArray)

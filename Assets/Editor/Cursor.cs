@@ -16,7 +16,14 @@ public static class Cursor
     private static void OnScene(SceneView sceneview)
     {
         Event e = Event.current;
-        if(!e.shift) return;
+        if(!e.shift) {
+            // c
+            if(e.type == EventType.KeyDown && e.keyCode == KeyCode.C) {
+                e.Use();
+                PivotDropdown.CycleMode();
+            }
+            return;
+        }
         
         // shift-lmb
         if ((e.type == EventType.MouseDown || e.type == EventType.MouseDrag) && e.button == 1)

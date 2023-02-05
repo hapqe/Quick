@@ -18,91 +18,94 @@ public static class Shortcuts
         var d = e.type == EventType.KeyDown;
         var m = e.type == EventType.MouseDown;
         
-        // alt-g
-        if(e.alt && d && e.keyCode == KeyCode.G) {
-            e.Use();
-            
-            var selection = Selection.gameObjects;
-
-            Record();
-            foreach(var go in selection) {
-                // set position to 0,0,0
-                go.transform.localPosition = Vector3.zero;
-            }
-            Collapse();
-        }
-
-        // alt-s
-        if(e.alt && d && k == KeyCode.S) {
-            e.Use();
-            
-            var selection = Selection.gameObjects;
-
-            Record();
-            foreach(var go in selection) {
-                // set scale to 1,1,1
-                go.transform.localScale = Vector3.one;
-            }
-            Collapse();
-        }
-
-        // alt-r
-        if(e.alt && d && k == KeyCode.R) {
-            e.Use();
-
-            var selection = Selection.gameObjects;
-
-            Record();
-            foreach(var go in selection) {
-                // set rotation to 0,0,0
-                go.transform.localEulerAngles = Vector3.zero;
-            }
-            Collapse();
-        }
-
         // shift-number
         if(e.shift && d) {
             var number = k - KeyCode.Alpha0;
             if(!(number >= 0 && number <= 9))   return;
             
-            EditorApplication.ExecuteMenuItem("Edit/Selection/Load Selection " + number);
-            if(Selection.gameObjects.Length == 0) return;
-            var p = PrefabUtility.InstantiatePrefab(Selection.gameObjects[0]);
-            if(p == null) return;
+            Spawn(number);
+        }
+    }
 
-            if(p as GameObject) {
-                (p as GameObject).transform.position = Cursor.position;
-            }
-            Undo.RegisterCreatedObjectUndo(p, "Create Prefab");
+    [MenuItem("Edit/Reset Position &g")]
+    static void ResetPosition()
+    {
+        var selection = Selection.gameObjects;
 
-            Selection.activeGameObject = null;
-            if(p as GameObject != null)
-            Selection.activeGameObject = p as GameObject;
+        Record();
+        foreach (var go in selection)
+        {
+            // set position to 0,0,0
+            go.transform.localPosition = Vector3.zero;
+        }
+        Collapse();
+    }
+
+    [MenuItem("Edit/Reset Rotation &r")]
+    static void ResetRotation()
+    {
+        var selection = Selection.gameObjects;
+
+        Record();
+        foreach (var go in selection)
+        {
+            // set rotation to 0,0,0
+            go.transform.localRotation = Quaternion.identity;
+        }
+        Collapse();
+    }
+
+    [MenuItem("Edit/Reset Scale &s")]
+    static void ResetScale()
+    {
+        var selection = Selection.gameObjects;
+
+        Record();
+        foreach (var go in selection)
+        {
+            // set scale to 1,1,1
+            go.transform.localScale = Vector3.one;
+        }
+        Collapse();
+    }
+
+    [MenuItem("Edit/Copy Materials %L")]
+    static void CopyMaterials()
+    {
+        var sel = Selection.gameObjects;
+        if(sel.Length == 0) return;
+
+        var active = Selection.activeGameObject;
+
+        var activeMat = active.GetComponent<Renderer>()?.sharedMaterial;
+
+        if(activeMat == null) return;
+
+        foreach(var go in sel) {
+            var rend = go.GetComponent<Renderer>();
+            if(rend == null) continue;
+
+            Undo.RecordObject(rend, "Set Material");
+
+            rend.sharedMaterial = activeMat;
         }
 
-        // ctrl-l
-        if(e.control && d && e.keyCode == KeyCode.L) {
-            e.Use();
+        Collapse();
+    }
 
-            var sel = Selection.gameObjects;
-            if(sel.Length == 0) return;
+    static void Spawn(int number) {
+        EditorApplication.ExecuteMenuItem("Edit/Selection/Load Selection " + number);
+        if(Selection.gameObjects.Length == 0) return;
+        var p = PrefabUtility.InstantiatePrefab(Selection.gameObjects[0]);
+        if(p == null) return;
 
-            var active = Selection.activeGameObject;
-
-            var activeMat = active.GetComponent<Renderer>()?.sharedMaterial;
-
-            if(activeMat == null) return;
-
-            foreach(var go in sel) {
-                var rend = go.GetComponent<Renderer>();
-                if(rend == null) continue;
-
-                Undo.RecordObject(rend, "Set Material");
-
-                rend.sharedMaterial = activeMat;
-            }
-
-            Collapse();
+        if(p as GameObject) {
+            (p as GameObject).transform.position = Cursor.position;
         }
+        Undo.RegisterCreatedObjectUndo(p, "Create Prefab");
+
+        Selection.activeGameObject = null;
+        if(p as GameObject != null)
+        Selection.activeGameObject = p as GameObject;
     }
 }

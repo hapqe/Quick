@@ -5,12 +5,13 @@ using UnityEngine;
 
 public static class EditorHelpers
 {
+    public static string action = "";
     public static bool isInAction {
         get {
-            return MoveTool.moving;
+            return action != "";
         }
     }
-    
+
     public static void Record(System.Func<GameObject, Object> action = null) {
         action = action ?? (go => go.transform);
         var selection = Selection.gameObjects;
@@ -41,6 +42,7 @@ public static class EditorHelpers
             drawer = new GameObject(nameof(T)).AddComponent<T>();
             drawer.transform.hideFlags = HideFlags.HideInHierarchy;
         }
+        SceneVisibilityManager.instance.DisablePicking(drawer.gameObject, true);
         return drawer;
     }
 }

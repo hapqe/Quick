@@ -17,7 +17,7 @@ public static class LayerTool
             layer = l;
         }
         else layer = LayerMask.NameToLayer(name);
-        
+
         if(layer == -1) return;
 
         foreach(var go in selection) {
@@ -36,7 +36,7 @@ public static class LayerTool
     static LayerTool()
     {
         SceneView.duringSceneGui += _ => {
-            TypingTool.Typing(perform, trigger, ref name, ref typing);
+            // TypingTool.Typing(perform, trigger, ref name, ref typing, "layer");
         };
     }
 }

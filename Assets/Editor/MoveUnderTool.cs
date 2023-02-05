@@ -4,10 +4,13 @@ using UnityEditor;
 using UnityEngine;
 using static EditorHelpers;
 
-[InitializeOnLoad]
 public static class MoveUnder
 {
-    static System.Action perform = () => {
+    [MenuItem("GameObject/Move Under", false, 0)]
+    static void Move() {
+        var name = EditorInputDialog.Show("Move Under");
+        if(name == null) return;
+        
         var selection = Selection.gameObjects;
         var parent = GameObject.Find(name);
         if (parent == null)
@@ -21,19 +24,5 @@ public static class MoveUnder
         }
         Selection.activeGameObject = null;
         Selection.activeGameObject = parent;
-    };
-
-    static System.Func<Event, bool> trigger = e => {
-        return e.type == EventType.KeyDown && e.keyCode == KeyCode.M;
-    };
-    
-    static string name = "";
-    static bool typing = false;
-
-    static MoveUnder()
-    {
-        SceneView.duringSceneGui += _ => {
-            TypingTool.Typing(perform, trigger, ref name, ref typing);
-        };
     }
 }
