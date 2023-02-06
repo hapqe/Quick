@@ -106,10 +106,10 @@ public static class EditorHelpers
         e.Use();
     }
 
-    public static Vector3 GetPlanePosition(Vector2 point)
+    public static Vector3 GetPlanePosition(Vector2 point, Vector2 mouse)
     {
         var e = Event.current;
-        var ray = HandleUtility.GUIPointToWorldRay(e.mousePosition);
+        var ray = HandleUtility.GUIPointToWorldRay(mouse);
         var normal = Camera.current.transform.forward;
         var plane = new Plane(normal, point);
 

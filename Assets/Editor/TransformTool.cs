@@ -13,6 +13,8 @@ public enum MoveMode {
 
 public class TransformTool : IStateTool
 {
+    const float preciseFactor = 0.1f;
+    
     public virtual Predicate<Event> trigger => throw new NotImplementedException();
 
     protected Vector3[] initial;
@@ -55,7 +57,7 @@ public class TransformTool : IStateTool
         }
         point = Selection.activeTransform.position;
 
-        start = GetPlanePosition(point);
+        start = GetPlanePosition(point, Event.current.mousePosition);
 
         gizmos.showAll = false;
 
@@ -86,7 +88,7 @@ public class TransformTool : IStateTool
 
         var transforms = Selection.transforms;
         
-        delta = GetPlanePosition(point) - start;
+        delta = GetPlanePosition(point, startMouse + mouseDelta) - start;
         gizmos.delta = delta;
 
         // mmb down
@@ -119,7 +121,8 @@ public class TransformTool : IStateTool
                 gizmos.mask = mask;
             }
 
-        mouseDelta += e.delta;
+        var precise = e.shift;
+        mouseDelta += e.delta * (precise ? preciseFactor : 1);
 
         Letters();
         AppendEvent(e, ref input);

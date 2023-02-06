@@ -8,6 +8,8 @@ using static EditorState;
 [InitializeOnLoad]
 public class MoveTool : TransformTool
 {
+    private bool snap;
+
     public override Predicate<Event> trigger => e =>
         e.type == EventType.KeyDown
         && e.keyCode == KeyCode.G
@@ -31,6 +33,7 @@ public class MoveTool : TransformTool
         var transforms = Selection.transforms;
         var mask = this.mask ?? Vector3.one;
         var active = Selection.activeTransform;
+        snap = e.control;
 
         var m = this.mask ?? Vector3.one;
         if (local)
@@ -46,7 +49,7 @@ public class MoveTool : TransformTool
                 for (int j = 0; j < transforms.Length; j++)
                 {
                     var t = transforms[j];
-                    t.position = initial[j] + delta;
+                    t.position = initial[j] + Snap(delta);
                 }
                 break;
             case MoveMode.Axis:
@@ -67,7 +70,7 @@ public class MoveTool : TransformTool
                     }
 
                     var t = transforms[j];
-                    t.position = initial[j] + m * axisDelta;
+                    t.position = initial[j] + Snap(m * axisDelta);
                 }
                 break;
             case MoveMode.Plane:
@@ -87,10 +90,23 @@ public class MoveTool : TransformTool
                 for (int j = 0; j < transforms.Length; j++)
                 {
                     var t = transforms[j];
-                    t.position = initial[j] + t.rotation * planeDelta;
+                    t.position = initial[j] + Snap(t.rotation * planeDelta);
                 }
                 
                 break;
+        }
+
+        if(input != "") {
+            var dist = float.Parse(input);
+            for (int j = 0; j < transforms.Length; j++)
+            {
+                m = this.mask ?? Vector3.right;
+                if(local) {
+                    m = initialRotation[j] * m;
+                }
+                var t = transforms[j];
+                t.position = initial[j] + m * dist;
+            }
         }
     }
 
@@ -127,5 +143,12 @@ public class MoveTool : TransformTool
         var plane = new Plane(normal, point);
         plane.Raycast(ray, out var distance);
         return ray.GetPoint(distance);
+    }
+
+    Vector3 Snap(Vector3 point) {
+        if(!snap) return point;
+        var moveSnap = EditorSnapSettings.move;
+        point = Snapping.Snap(point, moveSnap);
+        return point;
     }
 }
