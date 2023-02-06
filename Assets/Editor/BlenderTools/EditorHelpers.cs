@@ -124,4 +124,22 @@ public static class EditorHelpers
         Debug.Assert(key == KeyCode.Y || key == KeyCode.Z);
         return flipYZ ? (key == KeyCode.Y ? KeyCode.Z : KeyCode.Y) : key;
     }
+
+    public static Rect PhysicalRect(Rect rect)
+    {
+        var scale = EditorGUIUtility.pixelsPerPoint;
+        return new Rect(rect.x * scale, rect.y * scale, rect.width * scale, rect.height * scale);
+    }
+
+    public static Rect LogicalRect(Rect rect)
+    {
+        var scale = EditorGUIUtility.pixelsPerPoint;
+        return new Rect(rect.x / scale, rect.y / scale, rect.width / scale, rect.height / scale);
+    }
+
+    public static Vector2 PhysicalPoint(Vector2 point)
+    {
+        var scale = EditorGUIUtility.pixelsPerPoint;
+        return new Vector2(point.x * scale, point.y * scale);
+    }
 }

@@ -46,8 +46,6 @@ public class TransformTool : IStateTool
 
     public void Start()
     {
-        Rust.set_cursor_pos(0, 0);
-        
         var transforms = Selection.transforms;
         
         initial = new Vector3[transforms.Length];
@@ -88,6 +86,26 @@ public class TransformTool : IStateTool
     {
         var e = Event.current;
 
+        var rect = PhysicalRect(sceneView.position);
+        var screen = Camera.current.pixelRect;
+
+        var m = PhysicalPoint(e.mousePosition);
+
+        if(m.y < 10) {
+            Rust.set_cursor_pos((int)(m.x + rect.min.x), (int)rect.max.y);
+        }
+        if(m.y > screen.height - 10) {
+            Rust.set_cursor_pos((int)(m.x + rect.min.x), (int)(rect.max.y - screen.height) + 50);
+        }
+        var y = (int)(m.y + rect.min.y + (rect.height - screen.height) * 2);
+        if(m.x < 10) {
+            Rust.set_cursor_pos((int)rect.max.x - 10, y);
+        }
+        if(m.x > screen.width - 10) {
+            Rust.set_cursor_pos((int)(rect.min.x) + 20, y);
+        }
+
+
         var transforms = Selection.transforms;
         
         delta = GetPlanePosition(point, startMouse + mouseDelta) - start;
@@ -124,7 +142,12 @@ public class TransformTool : IStateTool
             }
 
         var precise = e.shift;
-        mouseDelta += e.delta * (precise ? preciseFactor : 1);
+
+        var d = e.delta * (precise ? preciseFactor : 1);
+        
+        screen = LogicalRect(screen);
+        if(Math.Abs(d.x) < screen.width - 50 && Math.Abs(d.y) < screen.height - 50)
+        mouseDelta += d;
 
         Letters();
         AppendEvent(e, ref input);

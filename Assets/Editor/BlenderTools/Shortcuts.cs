@@ -4,29 +4,8 @@ using UnityEditor;
 using UnityEngine;
 using static EditorHelpers;
 
-[InitializeOnLoad]
 public static class Shortcuts
 {
-    static Shortcuts()
-    {
-        SceneView.duringSceneGui += OnScene;
-    }
-
-    private static void OnScene(SceneView sceneView){
-        Event e = Event.current;
-        var k = e.keyCode;
-        var d = e.type == EventType.KeyDown;
-        var m = e.type == EventType.MouseDown;
-        
-        // shift-number
-        if(e.shift && d) {
-            var number = k - KeyCode.Alpha0;
-            if(!(number >= 0 && number <= 9))   return;
-            
-            Spawn(number);
-        }
-    }
-
     [MenuItem("Edit/Reset Position &g")]
     static void ResetPosition()
     {
