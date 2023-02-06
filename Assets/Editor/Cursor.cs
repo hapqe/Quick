@@ -15,6 +15,9 @@ public static class Cursor
 
     private static void OnScene(SceneView sceneview)
     {
+        EditorHelpers.GetDrawer<CursorGizmos>().transform.position = position;
+        EditorHelpers.GetDrawer<CursorGizmos>().scale = .7f / sceneview.position.width * 1000f;
+        
         Event e = Event.current;
         if(!e.shift) {
             // c
@@ -69,7 +72,5 @@ public static class Cursor
         // shift-c
         if(e.keyCode == KeyCode.C)
             position = Vector3.zero;
-
-        EditorHelpers.GetDrawer<CursorGizmos>().transform.position = position;
     }
 }

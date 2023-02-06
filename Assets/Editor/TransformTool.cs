@@ -19,7 +19,6 @@ public class TransformTool : IStateTool
     protected Vector3? mask;
     protected string input = "";
 
-    protected Vector3 activePosition;
     protected Vector3[] activeOrientation;
 
     protected Quaternion[] initialRotation;
@@ -27,6 +26,9 @@ public class TransformTool : IStateTool
     bool mmb;
 
     protected TransformGizmos gizmos {get => EditorHelpers.GetDrawer<TransformGizmos>(); }
+
+    protected Vector2 startMouse;
+    protected Vector2 mouseDelta;
 
     public void Start()
     {
@@ -57,6 +59,9 @@ public class TransformTool : IStateTool
         };
 
         input = "";
+        
+        startMouse = HandleUtility.WorldToGUIPoint(point);
+        mouseDelta = Vector2.zero;
     }
 
     public virtual void Update(SceneView sceneView)
@@ -108,10 +113,12 @@ public class TransformTool : IStateTool
 
             gizmos.directions = directions;
 
-            mask = GetMask(e, delta, activePosition, activeOrientation);
+            mask = GetMask(e, delta, point, activeOrientation);
 
             gizmos.mask = mask;
         }
+
+        mouseDelta += e.delta;
 
         AppendEvent(e, ref input);
     }

@@ -1,5 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Drawing;
+using System.Runtime.InteropServices;
 using UnityEditor;
 using UnityEngine;
 
@@ -61,7 +63,7 @@ public static class EditorHelpers
             var p = (Vector2)Camera.current.WorldToScreenPoint(pos + delta);
 
             var dot = Mathf.Abs(Vector2.Dot((p - center).normalized, (a - center).normalized));
-            if (dot > bestDot)
+            if (dot >= bestDot)
             {
                 bestDot = dot;
                 best = i;
@@ -99,7 +101,7 @@ public static class EditorHelpers
         e.Use();
     }
 
-    public static Vector3 GetPlanePosition(Vector3 point)
+    public static Vector3 GetPlanePosition(Vector2 point)
     {
         var e = Event.current;
         var ray = HandleUtility.GUIPointToWorldRay(e.mousePosition);
@@ -116,13 +118,5 @@ public static class EditorHelpers
     {
         Debug.Assert(key == KeyCode.Y || key == KeyCode.Z);
         return flipYZ ? (key == KeyCode.Y ? KeyCode.Z : KeyCode.Y) : key;
-    }
-
-    public static Vector3 MeanPoint(Transform[] transforms)
-    {
-        var sum = Vector3.zero;
-        foreach (var t in transforms)
-            sum += t.position;
-        return sum / transforms.Length;
     }
 }

@@ -27,63 +27,80 @@ public class MoveTool : TransformTool
 
         var transforms = Selection.transforms;
 
+        var mask = this.mask ?? Vector3.one;
+        var original = mask;
+
+        // snapping
+        if (e.control)
+        {
+            var snap = EditorSnapSettings.move;
+            delta = Snapping.Snap(delta, snap);
+        }
+
+        // keyboard input
+        if (input != "")
+        {
+            delta = Vector3.one * float.Parse(input);
+            mask = this.mask ?? Vector3.right;
+        }
+
         for (int i = 0; i < transforms.Length; i++)
         {
-            var mask = this.mask??Vector3.one;
-
-            // snapping
-            if (e.control)
-            {
-                var snap = EditorSnapSettings.move;
-                delta = Snapping.Snap(delta, snap);
-            }
-
-            // keyboard input
-            if (input != "")
-            {
-                delta = Vector3.one * float.Parse(input);
-                mask = this.mask ?? Vector3.right;
-            }
-
+            var t = transforms[i];
+            
             // local
-            if (Tools.pivotRotation == PivotRotation.Local)
+            if (Tools.pivotRotation == PivotRotation.Local && t == Selection.activeTransform)
                 mask = initialRotation[i] * mask;
-                
-            if(Mathf.Approximately(mask.magnitude, 1f))
+
+            if (Mathf.Approximately(mask.magnitude, 1f))
             {
                 var c = Camera.current.transform.position;
-                var normal = Vector3.ProjectOnPlane(c - activePosition, mask).normalized;
-                Intersect(normal);
+                Debug.Log(mask);
+                var normal = Vector3.ProjectOnPlane(c - point, mask).normalized;
+                Intersect(normal, true);
             }
-            else if(mask == Vector3.one) {
-                var t = transforms[i];
-                t.position = initial[i] + Vector3.Scale(delta, mask);
+            else if (original == Vector3.one)
+            {
+                t.position = initial[i] + Vector3.Scale(delta, original);
             }
-            else {
+            else
+            {
                 List<Vector3> normals = new List<Vector3>(2);
                 for (int j = 0; j < 3; j++)
                 {
-                    if(mask[j] == 1f)
+                    if (original[j] == 1f)
                         normals.Add(activeOrientation[j]);
                 }
-                Intersect(Vector3.Cross(normals[0], normals[1]));
+                Intersect(Vector3.Cross(normals[0], normals[1]), false);
             }
 
-            void Intersect(Vector3 normal)
+            void Intersect(Vector3 normal, bool single)
             {
-                var plane = new Plane(normal, start);
-                var ray = HandleUtility.GUIPointToWorldRay(e.mousePosition);
+                // Debug.Log(new { normal, single});
+                
+                var plane = new Plane(normal, point);
+                var ray = HandleUtility.GUIPointToWorldRay(mouseDelta + startMouse);
                 float distance;
                 plane.Raycast(ray, out distance);
-
                 var p = ray.GetPoint(distance);
-                distance = Vector3.Dot(p, mask);
-                var delta = p - start;
+
+                ray = HandleUtility.GUIPointToWorldRay(startMouse);
+                plane.Raycast(ray, out distance);
+                var s = ray.GetPoint(distance);
+
+                Vector3 delta;
+
+                if(t == Selection.activeTransform)
+                    delta = p - s;
+                else
+                    delta = initialRotation[i] * (p - s);
 
                 this.gizmos.delta = delta;
 
-                var t = transforms[i];
-                t.position = initial[i] + Vector3.Scale(delta, mask);
+                if (single)
+                    t.position = initial[i] + Vector3.Dot(delta, mask) * mask;
+                else
+                    t.position = initial[i] + delta;
             }
         }
 

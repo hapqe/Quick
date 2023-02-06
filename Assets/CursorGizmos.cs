@@ -2,29 +2,47 @@ using UnityEngine;
 
 public class CursorGizmos : MonoBehaviour, IGizmosDrawer
 {
+    public float scale;
+    public bool ortho = false;
     public void OnDrawGizmos()
     {
         var cam = UnityEditor.SceneView.lastActiveSceneView.camera;
         
         var cameraPlane = new Plane(cam.transform.forward, cam.transform.position);
         var d = cameraPlane.GetDistanceToPoint(transform.position);
+
+        var pos = transform.position;
+
+        if(cam.orthographic){
+            var dir = cam.transform.forward;
+            d = 1.5f;
+
+            var screenPos = cam.WorldToScreenPoint(pos);
+            pos = cam.ScreenToWorldPoint(new Vector3(screenPos.x, screenPos.y, d));
+
+            scale = cam.orthographicSize;
+        }
         
         Gizmos.color = Color.red;
         #if UNITY_EDITOR
-        DrawCircleAlignedToView(16, d * .04f, transform.position);
+        var a = .04f * scale;
+        var b = .06f * scale;
+        var c = .02f * scale;
+        
+        DrawCircleAlignedToView(16, d * a, pos);
         Gizmos.color = Color.black;
         // right
-        Gizmos.DrawLine(transform.position + transform.forward * d * .02f, transform.position + transform.forward * d * .06f);
+        Gizmos.DrawLine(pos + transform.forward * d * c, pos + transform.forward * d * b);
         // left
-        Gizmos.DrawLine(transform.position - transform.forward * d * .02f, transform.position - transform.forward * d * .06f);
+        Gizmos.DrawLine(pos - transform.forward * d * c, pos - transform.forward * d * b);
         // up
-        Gizmos.DrawLine(transform.position + transform.up * d * .02f, transform.position + transform.up * d * .06f);
+        Gizmos.DrawLine(pos + transform.up * d * c, pos + transform.up * d * b);
         // down
-        Gizmos.DrawLine(transform.position - transform.up * d * .02f, transform.position - transform.up * d * .06f);
+        Gizmos.DrawLine(pos - transform.up * d * c, pos - transform.up * d * b);
         // forward
-        Gizmos.DrawLine(transform.position + transform.right * d * .02f, transform.position + transform.right * d * .06f);
+        Gizmos.DrawLine(pos + transform.right * d * c, pos + transform.right * d * b);
         // back
-        Gizmos.DrawLine(transform.position - transform.right * d * .02f, transform.position - transform.right * d * .06f);
+        Gizmos.DrawLine(pos - transform.right * d * c, pos - transform.right * d * b);
         #endif
     }
 
