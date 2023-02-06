@@ -46,6 +46,8 @@ public class TransformTool : IStateTool
 
     public void Start()
     {
+        Rust.set_cursor_pos(0, 0);
+        
         var transforms = Selection.transforms;
         
         initial = new Vector3[transforms.Length];
