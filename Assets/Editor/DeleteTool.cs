@@ -10,7 +10,7 @@ public static class DeleteTool
     static bool prompting = false;
     static DeleteTool()
     {
-        SceneView.duringSceneGui += OnScene;
+        // SceneView.duringSceneGui += OnScene;
     }
 
     private static void OnScene(SceneView sceneView){

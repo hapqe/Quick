@@ -43,7 +43,7 @@ public static class EditorHelpers
         return drawer;
     }
 
-    public static Vector3 GetMask(Event e, Vector3 delta, Vector3 pos, Vector3[] orientation)
+    public static Vector3 GetMask(Event e, Vector3 delta, Vector3 pos, Vector3[] orientation, out MoveMode mode, out Vector3 normal)
     {
         delta.Normalize();
         var global = Tools.pivotRotation == PivotRotation.Global;
@@ -71,10 +71,15 @@ public static class EditorHelpers
         }
 
         var axis = globalAxes[best];
-        if (e.shift)
+        normal = axis;
+        if (e.shift) {
+            mode = MoveMode.Plane;
             return Vector3.one - axis;
-        else
+        }
+        else {
+            mode = MoveMode.Axis;
             return axis;
+        }
     }
 
     public static void AppendEvent(Event e, ref string input)

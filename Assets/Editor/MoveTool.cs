@@ -25,85 +25,73 @@ public class MoveTool : TransformTool
 
         var e = Event.current;
 
+        var local = Tools.pivotRotation == PivotRotation.Local;
+        local = swap ^ local;
+
         var transforms = Selection.transforms;
-
         var mask = this.mask ?? Vector3.one;
-        var original = mask;
+        var active = Selection.activeTransform;
 
-        // snapping
-        if (e.control)
+        var m = this.mask ?? Vector3.one;
+        if (local)
         {
-            var snap = EditorSnapSettings.move;
-            delta = Snapping.Snap(delta, snap);
+            m = active.rotation * m;
         }
 
-        // keyboard input
-        if (input != "")
-        {
-            delta = Vector3.one * float.Parse(input);
-            mask = this.mask ?? Vector3.right;
-        }
+        // local
 
-        for (int i = 0; i < transforms.Length; i++)
+        switch (mode)
         {
-            var t = transforms[i];
-            
-            // local
-            if (Tools.pivotRotation == PivotRotation.Local && t == Selection.activeTransform)
-                mask = initialRotation[i] * mask;
-
-            if (Mathf.Approximately(mask.magnitude, 1f))
-            {
-                var c = Camera.current.transform.position;
-                Debug.Log(mask);
-                var normal = Vector3.ProjectOnPlane(c - point, mask).normalized;
-                Intersect(normal, true);
-            }
-            else if (original == Vector3.one)
-            {
-                t.position = initial[i] + Vector3.Scale(delta, original);
-            }
-            else
-            {
-                List<Vector3> normals = new List<Vector3>(2);
-                for (int j = 0; j < 3; j++)
+            case MoveMode.All:
+                for (int j = 0; j < transforms.Length; j++)
                 {
-                    if (original[j] == 1f)
-                        normals.Add(activeOrientation[j]);
+                    var t = transforms[j];
+                    t.position = initial[j] + delta;
                 }
-                Intersect(Vector3.Cross(normals[0], normals[1]), false);
-            }
+                break;
+            case MoveMode.Axis:
+                var c = Camera.current.transform.position;
+                var n = Vector3.ProjectOnPlane(c - point, m).normalized;
+                var i = Plane(n, startTransformMouse);
 
-            void Intersect(Vector3 normal, bool single)
-            {
-                // Debug.Log(new { normal, single});
+                var now = Plane(n, startTransformMouse + mouseDelta);
+
+                var axisDelta = Vector3.Dot(now - i, m);
+
+                for (int j = 0; j < transforms.Length; j++)
+                {
+                    m = mask;
+                    if (local)
+                    {
+                        m = initialRotation[j] * m;
+                    }
+
+                    var t = transforms[j];
+                    t.position = initial[j] + m * axisDelta;
+                }
+                break;
+            case MoveMode.Plane:
+                n = planeNormal;
+                if (local)
+                {
+                    n = active.rotation * n;
+                }
                 
-                var plane = new Plane(normal, point);
-                var ray = HandleUtility.GUIPointToWorldRay(mouseDelta + startMouse);
-                float distance;
-                plane.Raycast(ray, out distance);
-                var p = ray.GetPoint(distance);
+                i = Plane(n, startTransformMouse);
 
-                ray = HandleUtility.GUIPointToWorldRay(startMouse);
-                plane.Raycast(ray, out distance);
-                var s = ray.GetPoint(distance);
+                now = Plane(n, startTransformMouse + mouseDelta);
 
-                Vector3 delta;
+                var planeDelta = now - i;
+                planeDelta = Quaternion.Inverse(active.rotation) * planeDelta;
 
-                if(t == Selection.activeTransform)
-                    delta = p - s;
-                else
-                    delta = initialRotation[i] * (p - s);
-
-                this.gizmos.delta = delta;
-
-                if (single)
-                    t.position = initial[i] + Vector3.Dot(delta, mask) * mask;
-                else
-                    t.position = initial[i] + delta;
-            }
+                for (int j = 0; j < transforms.Length; j++)
+                {
+                    var t = transforms[j];
+                    t.position = initial[j] + t.rotation * planeDelta;
+                }
+                
+                break;
         }
-
     }
 
     public override void Perform()
@@ -131,5 +119,13 @@ public class MoveTool : TransformTool
         {
             transforms[i].position = initial[i];
         }
+    }
+
+    Vector3 Plane(Vector3 normal, Vector2 mouse)
+    {
+        var ray = HandleUtility.GUIPointToWorldRay(mouse);
+        var plane = new Plane(normal, point);
+        plane.Raycast(ray, out var distance);
+        return ray.GetPoint(distance);
     }
 }

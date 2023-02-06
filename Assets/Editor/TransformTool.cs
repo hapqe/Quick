@@ -5,6 +5,12 @@ using UnityEditor;
 using UnityEngine;
 using static EditorHelpers;
 
+public enum MoveMode {
+    All,
+    Plane,
+    Axis
+}
+
 public class TransformTool : IStateTool
 {
     public virtual Predicate<Event> trigger => throw new NotImplementedException();
@@ -28,7 +34,13 @@ public class TransformTool : IStateTool
     protected TransformGizmos gizmos {get => EditorHelpers.GetDrawer<TransformGizmos>(); }
 
     protected Vector2 startMouse;
+    protected Vector2 startTransformMouse;
     protected Vector2 mouseDelta;
+
+    protected MoveMode mode;
+
+    protected Vector3 planeNormal;
+    protected bool swap = false;
 
     public void Start()
     {
@@ -60,8 +72,12 @@ public class TransformTool : IStateTool
 
         input = "";
         
-        startMouse = HandleUtility.WorldToGUIPoint(point);
+        startTransformMouse = HandleUtility.WorldToGUIPoint(point);
+        startMouse = Event.current.mousePosition;
         mouseDelta = Vector2.zero;
+
+        mode = MoveMode.All;
+        swap = false;
     }
 
     public virtual void Update(SceneView sceneView)
@@ -76,6 +92,7 @@ public class TransformTool : IStateTool
         // mmb down
         if(e.type == EventType.MouseDown && e.button == 2) {
             mmb = true;
+            swap = false;
             e.Use();
         }
 
@@ -88,39 +105,48 @@ public class TransformTool : IStateTool
         gizmos.showAll = mmb;
 
         if(e.type != EventType.Layout || e.type != EventType.Repaint)
-        if(mmb) {
-            gizmos.show = true;
-            gizmos.showAll = true;
-            
-            var global = Tools.pivotRotation == PivotRotation.Global;
-            
-            directions = new Vector3[transforms.Length * 3];
-            for (int i = 0; i < transforms.Length; i++)
+        if(mmb)
             {
-                var t = transforms[i];
+                gizmos.show = true;
+                gizmos.showAll = true;
 
-                if(global) {
-                    directions[i * 3 + 0] = Vector3.right;
-                    directions[i * 3 + 1] = Vector3.up;
-                    directions[i * 3 + 2] = Vector3.forward;
-                }
-                else {
-                    directions[i * 3 + 0] = t.right;
-                    directions[i * 3 + 1] = t.up;
-                    directions[i * 3 + 2] = t.forward;
-                }
+                var global = Tools.pivotRotation == PivotRotation.Global;
+
+                Directions(transforms, global);
+
+                mask = GetMask(e, delta, point, activeOrientation, out mode, out planeNormal);
+
+                gizmos.mask = mask;
             }
-
-            gizmos.directions = directions;
-
-            mask = GetMask(e, delta, point, activeOrientation);
-
-            gizmos.mask = mask;
-        }
 
         mouseDelta += e.delta;
 
+        Letters();
         AppendEvent(e, ref input);
+    }
+
+    private void Directions(Transform[] transforms, bool global)
+    {
+        directions = new Vector3[transforms.Length * 3];
+        for (int i = 0; i < transforms.Length; i++)
+        {
+            var t = transforms[i];
+
+            if (global)
+            {
+                directions[i * 3 + 0] = Vector3.right;
+                directions[i * 3 + 1] = Vector3.up;
+                directions[i * 3 + 2] = Vector3.forward;
+            }
+            else
+            {
+                directions[i * 3 + 0] = t.right;
+                directions[i * 3 + 1] = t.up;
+                directions[i * 3 + 2] = t.forward;
+            }
+        }
+
+        gizmos.directions = directions;
     }
 
     public virtual void Perform()
@@ -131,5 +157,61 @@ public class TransformTool : IStateTool
     public virtual void Cancel()
     {
         gizmos.show = false;
+    }
+
+    public void Letters()
+    {
+        LimitDirection(KeyCode.X, Vector3.right);
+        LimitDirection(GetKey(KeyCode.Y), Vector3.up);
+        LimitDirection(GetKey(KeyCode.Z), Vector3.forward);
+
+        gizmos.show = mask != null;
+        gizmos.mask = mask;
+        Directions(Selection.transforms, Tools.pivotRotation == PivotRotation.Global ^ swap);
+    }
+
+    private void LimitDirection(KeyCode code, Vector3 direction)
+    {
+        if (Key(code))
+        {
+            var s = Event.current.shift;
+            var now = s ? MoveMode.Plane : MoveMode.Axis;
+            if (now != mode)
+            {
+                swap = false;
+                mask = null;
+            }
+            mode = now;
+
+            if (mask == direction || mode == MoveMode.Plane && mask == Vector3.one - direction)
+            {
+                if (!swap)
+                    swap = true;
+                else
+                {
+                    mask = null;
+                    mode = MoveMode.All;
+                }
+            }
+            else
+            {
+                mask = direction;
+                swap = false;
+            }
+
+            if (mode == MoveMode.Plane)
+            {
+                planeNormal = direction;
+                mask = Vector3.one - direction;
+            }
+        }
+    }
+
+    public bool Key(KeyCode key) {
+        if(Event.current.type == EventType.KeyDown && Event.current.keyCode == key) {
+            Event.current.Use();
+            return true;
+        }
+        return false;
     }
 }

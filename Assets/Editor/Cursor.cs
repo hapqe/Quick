@@ -15,6 +15,8 @@ public static class Cursor
 
     private static void OnScene(SceneView sceneview)
     {
+        if(EditorState.active != null) return;
+        
         EditorHelpers.GetDrawer<CursorGizmos>().transform.position = position;
         EditorHelpers.GetDrawer<CursorGizmos>().scale = .7f / sceneview.position.width * 1000f;
         
