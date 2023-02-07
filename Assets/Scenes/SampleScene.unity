@@ -155,7 +155,7 @@ MonoBehaviour:
   show: 0
   point: {x: 0, y: 0, z: 0}
   showAll: 0
-  delta: {x: -0.6187229, y: 0.141716, z: 3.2743034}
+  delta: {x: -5.9772377, y: 6.7588806, z: 2.3536592}
   directions:
   - {x: 1, y: 0, z: 0}
   - {x: 0, y: 1, z: 0}
@@ -348,15 +348,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4529345678284365994, guid: 54ac1db2b8d1fd949991c2f755e413e0, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 32.269
+      value: -15.25
       objectReference: {fileID: 0}
     - target: {fileID: 4529345678284365994, guid: 54ac1db2b8d1fd949991c2f755e413e0, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: -361.645
+      value: -394.736
       objectReference: {fileID: 0}
     - target: {fileID: 4529345678284365994, guid: 54ac1db2b8d1fd949991c2f755e413e0, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
-      value: 342.931
+      value: 336.164
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 54ac1db2b8d1fd949991c2f755e413e0, type: 3}

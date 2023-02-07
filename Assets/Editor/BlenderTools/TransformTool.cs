@@ -5,7 +5,8 @@ using UnityEditor;
 using UnityEngine;
 using static EditorHelpers;
 
-public enum MoveMode {
+public enum MoveMode
+{
     All,
     Plane,
     Axis
@@ -14,7 +15,7 @@ public enum MoveMode {
 public class TransformTool : IStateTool
 {
     const float preciseFactor = 0.1f;
-    
+
     public virtual Predicate<Event> trigger => throw new NotImplementedException();
 
     protected Vector3[] initial;
@@ -33,7 +34,7 @@ public class TransformTool : IStateTool
 
     bool mmb;
 
-    protected TransformGizmos gizmos {get => EditorHelpers.GetDrawer<TransformGizmos>(); }
+    protected TransformGizmos gizmos { get => EditorHelpers.GetDrawer<TransformGizmos>(); }
 
     protected Vector2 startMouse;
     protected Vector2 startTransformMouse;
@@ -47,7 +48,7 @@ public class TransformTool : IStateTool
     public void Start()
     {
         var transforms = Selection.transforms;
-        
+
         initial = new Vector3[transforms.Length];
         initialRotation = new Quaternion[transforms.Length];
         for (int i = 0; i < transforms.Length; i++)
@@ -73,7 +74,7 @@ public class TransformTool : IStateTool
         };
 
         input = "";
-        
+
         startTransformMouse = HandleUtility.WorldToGUIPoint(point);
         startMouse = Event.current.mousePosition;
         mouseDelta = Vector2.zero;
@@ -86,48 +87,32 @@ public class TransformTool : IStateTool
     {
         var e = Event.current;
 
-        var rect = PhysicalRect(sceneView.position);
-        var screen = Camera.current.pixelRect;
-
-        var m = PhysicalPoint(e.mousePosition);
-
-        if(m.y < 10) {
-            Rust.set_cursor_pos((int)(m.x + rect.min.x), (int)rect.max.y);
-        }
-        if(m.y > screen.height - 10) {
-            Rust.set_cursor_pos((int)(m.x + rect.min.x), (int)(rect.max.y - screen.height) + 50);
-        }
-        var y = (int)(m.y + rect.min.y + (rect.height - screen.height) * 2);
-        if(m.x < 10) {
-            Rust.set_cursor_pos((int)rect.max.x - 10, y);
-        }
-        if(m.x > screen.width - 10) {
-            Rust.set_cursor_pos((int)(rect.min.x) + 20, y);
-        }
-
+        Continuous(sceneView, e);
 
         var transforms = Selection.transforms;
-        
+
         delta = GetPlanePosition(point, startMouse + mouseDelta) - start;
         gizmos.delta = delta;
 
         // mmb down
-        if(e.type == EventType.MouseDown && e.button == 2) {
+        if (e.type == EventType.MouseDown && e.button == 2)
+        {
             mmb = true;
             swap = false;
             e.Use();
         }
 
         // mmb up
-        if(e.type == EventType.MouseUp && e.button == 2) {
+        if (e.type == EventType.MouseUp && e.button == 2)
+        {
             mmb = false;
             e.Use();
         }
 
         gizmos.showAll = mmb;
 
-        if(e.type != EventType.Layout || e.type != EventType.Repaint)
-        if(mmb)
+        if (e.type != EventType.Layout || e.type != EventType.Repaint)
+            if (mmb)
             {
                 gizmos.show = true;
                 gizmos.showAll = true;
@@ -144,13 +129,45 @@ public class TransformTool : IStateTool
         var precise = e.shift;
 
         var d = e.delta * (precise ? preciseFactor : 1);
-        
-        screen = LogicalRect(screen);
-        if(Math.Abs(d.x) < screen.width - 50 && Math.Abs(d.y) < screen.height - 50)
-        mouseDelta += d;
+
+        var screen = LogicalRect(Camera.current.pixelRect);
+        if (Math.Abs(d.x) < screen.width - 50 && Math.Abs(d.y) < screen.height - 50)
+            mouseDelta += d;
 
         Letters();
         AppendEvent(e, ref input);
+    }
+
+    private static void Continuous(SceneView sceneView, Event e)
+    {
+        var rect = PhysicalRect(sceneView.position);
+        var screen = Camera.current.pixelRect;
+
+        var m = PhysicalPoint(e.mousePosition);
+
+        var navHeight = (int)(rect.height - screen.height);
+        var margin = 10;
+        var innerMargin = 20;
+
+        var x = (int)(m.x + rect.min.x);
+        if (m.y < margin)
+        {
+            Rust.set_cursor_pos(x, (int)rect.max.y);
+        }
+        if (m.y > screen.height - margin)
+        {
+            Rust.set_cursor_pos(x, (int)rect.min.y + navHeight + innerMargin * 2);
+        }
+
+        var y = (int)(m.y + rect.min.y + navHeight);
+        if (m.x < margin)
+        {
+            Rust.set_cursor_pos((int)rect.max.x - innerMargin, y);
+        }
+        if (m.x > screen.width - margin)
+        {
+            Rust.set_cursor_pos((int)rect.min.x + innerMargin, y);
+        }
     }
 
     private void Directions(Transform[] transforms, bool global)
@@ -235,8 +252,10 @@ public class TransformTool : IStateTool
         }
     }
 
-    public bool Key(KeyCode key) {
-        if(Event.current.type == EventType.KeyDown && Event.current.keyCode == key) {
+    public bool Key(KeyCode key)
+    {
+        if (Event.current.type == EventType.KeyDown && Event.current.keyCode == key)
+        {
             Event.current.Use();
             return true;
         }
