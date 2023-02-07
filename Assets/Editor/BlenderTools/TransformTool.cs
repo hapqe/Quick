@@ -151,11 +151,8 @@ public abstract class TransformTool : IStateTool
 
     public void AfterUpdate()
     {
-        if(input.Length == 1 && (input[0] == '.' || input[0] == ','))
-        {
-            return;
-        }
-        if(input != "") Numerical(float.Parse(input));
+        if(float.TryParse(input, out var value))
+            Numerical(value);
     }
 
     private static void Continuous(SceneView sceneView, Event e)

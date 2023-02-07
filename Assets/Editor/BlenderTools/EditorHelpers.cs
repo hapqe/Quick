@@ -149,6 +149,14 @@ public static class EditorHelpers
             if (input.Length > 0)
                 input = input.Substring(0, input.Length - 1);
         }
+        // minus toggle
+        if (e.keyCode == KeyCode.Minus)
+        {
+            if (input.Length > 0 && input[0] == '-')
+                input = input.Substring(1);
+            else
+                input = "-" + input;
+        }
 
         e.Use();
     }
