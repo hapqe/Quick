@@ -34,6 +34,8 @@ public class ScaleTool : TransformTool
 
     void ScaleTransform(Transform t, float scale, Vector3 initialScale, Vector3 initialPosition)
     {
+        scale = Snap(scale);
+        
         var m = this.mask ?? Vector3.one;
         var om = m;
         
@@ -78,5 +80,12 @@ public class ScaleTool : TransformTool
 
             ScaleTransform(t, input, i, initialPosition[j]);
         }
+    }
+
+    public float Snap(float input)
+    {
+        if(!snap) return input;
+        var s = EditorSnapSettings.scale;
+        return Snapping.Snap(input, s);
     }
 }
