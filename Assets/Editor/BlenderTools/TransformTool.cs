@@ -50,7 +50,7 @@ public abstract class TransformTool : IStateTool
     protected Transform active;
 
 
-    public void Start()
+    public virtual void Start()
     {
         active = Selection.activeTransform;
         transforms = Selection.transforms;

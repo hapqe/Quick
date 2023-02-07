@@ -180,4 +180,12 @@ public static class EditorHelpers
         delta = Vector3.Scale(delta, mask);
         return point + delta;
     }
+
+    public static Vector3 SignVector(Vector3 mask, float sign) {
+        return new Vector3(
+            mask.x == 0 ? 1 : sign,
+            mask.y == 0 ? 1 : sign,
+            mask.z == 0 ? 1 : sign
+        );
+    }
 }

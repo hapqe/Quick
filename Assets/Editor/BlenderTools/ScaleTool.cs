@@ -9,9 +9,19 @@ public class ScaleTool : TransformTool
 {
     public override Predicate<Event> trigger => e => TriggerOn(e, KeyCode.S);
 
+    Vector2 startDir;
+
+    float sign;
+
     static ScaleTool()
     {
         tools.Add(new ScaleTool());
+    }
+
+    public override void Start() {
+        base.Start();
+
+        startDir = startMouse - startTransformMouse;
     }
 
     public override void Update(SceneView sceneView)
@@ -20,45 +30,46 @@ public class ScaleTool : TransformTool
 
         var m = this.mask ?? Vector3.one;
 
-        for (int j = 0; j < transforms.Length; j++)
+        var original = (startMouse - startTransformMouse).magnitude;
+        var diff = startMouse - startTransformMouse + mouseDelta;
+        sign = Mathf.Sign(Vector3.Dot(diff, startDir));
+
+        var multiplier = sign * diff.magnitude / original;
+
+        for (int i = 0; i < transforms.Length; i++)
         {
-            var t = transforms[j];
-            var i = initialScale[j];
-
-            var original = (startMouse - startTransformMouse).magnitude;
-            var multiplier = (startMouse - startTransformMouse + mouseDelta).magnitude / original;
-
-            ScaleTransform(t, multiplier, i, initialPosition[j]);
+            ScaleTransform(multiplier, i);
         }
     }
 
-    void ScaleTransform(Transform t, float scale, Vector3 initialScale, Vector3 initialPosition)
+    void ScaleTransform(float scale, int i)
     {
-        scale = Snap(scale);
+        var t = transforms[i];
+        Vector3 initial = initialScale[i];
         
         var m = this.mask ?? Vector3.one;
-        var om = m;
+        var inverse = m;
         
         Vector3 diff;
         
         if (local || mode == MoveMode.All)
         {
-            diff = initialScale * scale - initialScale;
+            diff = initial * scale - initial;
             diff = Vector3.Scale(diff, m);
-            t.localScale = initialScale + diff;
-            om = t.rotation * om;
+            t.localScale = initial + diff;
+            inverse = t.rotation * inverse;
         }
         else
         {
-            var s = initialScale * scale - initialScale;
-            m = t.rotation * m;
+            m = initialRotation[i] * m;
             m = AbsVector(m);
-            diff = initialScale * scale - initialScale;
+            diff = initial * Mathf.Abs(scale) - initial;
             diff = Vector3.Scale(diff, m);
-            t.localScale = initialScale + diff;
+            t.localScale = initial + diff;
+            t.localScale = Vector3.Scale(t.localScale, SignVector((Vector3)mask, sign));
         }
 
-        OffsetTransform(t, initialPosition, scale, om);
+        OffsetTransform(t, initialPosition[i], scale, inverse);
     }
 
     void OffsetTransform(Transform t, Vector3 initial, float scale, Vector3 mask)
@@ -73,12 +84,9 @@ public class ScaleTool : TransformTool
 
     public override void Numerical(float input)
     {
-        for (int j = 0; j < transforms.Length; j++)
+        for (int i = 0; i < transforms.Length; i++)
         {
-            var t = transforms[j];
-            var i = initialScale[j];
-
-            ScaleTransform(t, input, i, initialPosition[j]);
+            ScaleTransform(input, i);
         }
     }
 
