@@ -47,4 +47,10 @@ public static class Shortcuts
         }
         Collapse();
     }
+
+    [MenuItem("Edit/Cycle Pivot &x")]
+    static void CyclePivot()
+    {
+        PivotDropdown.CycleMode();
+    }
 }

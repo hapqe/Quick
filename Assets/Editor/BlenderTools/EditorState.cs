@@ -8,8 +8,10 @@ public interface IStateTool {
     Predicate<Event> trigger { get; }
     void Start();
     void Update(SceneView sceneView);
+    void AfterUpdate();
     void Perform();
     void Cancel();
+    void Numerical(float input);
 }
 
 [InitializeOnLoad]
@@ -57,6 +59,7 @@ public static class EditorState
             }
             // update
             active.Update(sceneView);
+            active.AfterUpdate();
         }
     }
 }

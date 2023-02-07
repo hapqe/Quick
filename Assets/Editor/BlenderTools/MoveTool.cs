@@ -1,20 +1,13 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using static EditorState;
+using static EditorHelpers;
 
 [InitializeOnLoad]
 public class MoveTool : TransformTool
 {
-    private bool snap;
-
-    public override Predicate<Event> trigger => e =>
-        e.type == EventType.KeyDown
-        && e.keyCode == KeyCode.G
-        && Selection.transforms.Length > 0
-        && !e.alt;
+    public override Predicate<Event> trigger => e => TriggerOn(e, KeyCode.G);
 
     static MoveTool()
     {
@@ -25,23 +18,11 @@ public class MoveTool : TransformTool
     {
         base.Update(sceneView);
 
-        var e = Event.current;
-
-        var local = Tools.pivotRotation == PivotRotation.Local;
-        local = swap ^ local;
-
-        var transforms = Selection.transforms;
-        var mask = this.mask ?? Vector3.one;
-        var active = Selection.activeTransform;
-        snap = e.control;
-
         var m = this.mask ?? Vector3.one;
         if (local)
         {
             m = active.rotation * m;
         }
-
-        // local
 
         switch (mode)
         {
@@ -49,7 +30,7 @@ public class MoveTool : TransformTool
                 for (int j = 0; j < transforms.Length; j++)
                 {
                     var t = transforms[j];
-                    t.position = initial[j] + Snap(delta);
+                    t.position = initialPosition[j] + Snap(delta);
                 }
                 break;
             case MoveMode.Axis:
@@ -63,14 +44,14 @@ public class MoveTool : TransformTool
 
                 for (int j = 0; j < transforms.Length; j++)
                 {
-                    m = mask;
+                    m = (Vector3)mask;
                     if (local)
                     {
                         m = initialRotation[j] * m;
                     }
 
                     var t = transforms[j];
-                    t.position = initial[j] + m * Snap(axisDelta);
+                    t.position = initialPosition[j] + m * Snap(axisDelta);
                 }
                 break;
             case MoveMode.Plane:
@@ -90,50 +71,10 @@ public class MoveTool : TransformTool
                 for (int j = 0; j < transforms.Length; j++)
                 {
                     var t = transforms[j];
-                    t.position = initial[j] + t.rotation * Snap(planeDelta);
+                    t.position = initialPosition[j] + t.rotation * Snap(planeDelta);
                 }
                 
                 break;
-        }
-
-        if(input != "") {
-            var dist = float.Parse(input);
-            for (int j = 0; j < transforms.Length; j++)
-            {
-                m = this.mask ?? Vector3.right;
-                if(local) {
-                    m = initialRotation[j] * m;
-                }
-                var t = transforms[j];
-                t.position = initial[j] + m * dist;
-            }
-        }
-    }
-
-    public override void Perform()
-    {
-        base.Perform();
-
-        var transforms = Selection.transforms;
-        for (int i = 0; i < transforms.Length; i++)
-        {
-            var now = transforms[i].position;
-            transforms[i].position = initial[i];
-            Undo.RecordObject(transforms[i], "Move");
-            transforms[i].position = now;
-        }
-
-        Undo.FlushUndoRecordObjects();
-    }
-
-    public override void Cancel()
-    {
-        base.Cancel();
-
-        var transforms = Selection.transforms;
-        for (int i = 0; i < transforms.Length; i++)
-        {
-            transforms[i].position = initial[i];
         }
     }
 
@@ -154,10 +95,26 @@ public class MoveTool : TransformTool
 
     float Snap(float point) {
         if(!snap) return point;
-        var moveSnap = EditorSnapSettings.move.x;
-        if(mask == Vector3.up) moveSnap = EditorSnapSettings.move.y;
-        if(mask == Vector3.forward) moveSnap = EditorSnapSettings.move.z;
+        Vector3 m = EditorSnapSettings.move;
+        
+        var moveSnap = m.x;
+        if(mask == Vector3.up) moveSnap = m.y;
+        if(mask == Vector3.forward) moveSnap = m.z;
+
         point = Snapping.Snap(point, moveSnap);
         return point;
+    }
+
+    public override void Numerical(float input)
+    {
+        for (int j = 0; j < transforms.Length; j++)
+        {
+            var m = this.mask ?? Vector3.right;
+            if(local) {
+                m = initialRotation[j] * m;
+            }
+            var t = transforms[j];
+            t.position = initialPosition[j] + m * input;
+        }
     }
 }

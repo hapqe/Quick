@@ -21,14 +21,6 @@ public static class Cursor
         EditorHelpers.GetDrawer<CursorGizmos>().scale = .7f / sceneview.position.width * 1000f;
         
         Event e = Event.current;
-        if(!e.shift) {
-            // c
-            if(e.type == EventType.KeyDown && e.keyCode == KeyCode.Y) {
-                e.Use();
-                PivotDropdown.CycleMode();
-            }
-            return;
-        }
         
         // shift-lmb
         if ((e.type == EventType.MouseDown || e.type == EventType.MouseDrag) && e.button == 1)

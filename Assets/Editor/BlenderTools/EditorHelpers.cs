@@ -82,30 +82,6 @@ public static class EditorHelpers
         }
     }
 
-    public static void AppendEvent(Event e, ref string input)
-    {
-        if(e.type != EventType.KeyDown)
-            return;
-        
-        // append to input
-        if (e.keyCode >= KeyCode.Alpha0 && e.keyCode <= KeyCode.Alpha9)
-            input += (char)('0' + (e.keyCode - KeyCode.Alpha0));
-        if (e.keyCode >= KeyCode.Keypad0 && e.keyCode <= KeyCode.Keypad9)
-            input += (char)('0' + (e.keyCode - KeyCode.Keypad0));
-        if (e.keyCode == KeyCode.Period)
-            input += '.';
-        if (e.keyCode == KeyCode.Comma)
-            input += ',';
-        // backspace
-        if (e.keyCode == KeyCode.Backspace)
-        {
-            if (input.Length > 0)
-                input = input.Substring(0, input.Length - 1);
-        }
-
-        e.Use();
-    }
-
     public static Vector3 GetPlanePosition(Vector2 point, Vector2 mouse)
     {
         var e = Event.current;
@@ -141,5 +117,59 @@ public static class EditorHelpers
     {
         var scale = EditorGUIUtility.pixelsPerPoint;
         return new Vector2(point.x * scale, point.y * scale);
+    }
+
+    public static bool Key(KeyCode key)
+    {
+        if (Event.current.type == EventType.KeyDown && Event.current.keyCode == key)
+        {
+            Event.current.Use();
+            return true;
+        }
+        return false;
+    }
+
+    public static void AppendEvent(Event e, ref string input)
+    {
+        if(e.type != EventType.KeyDown)
+            return;
+        
+        // append to input
+        if (e.keyCode >= KeyCode.Alpha0 && e.keyCode <= KeyCode.Alpha9)
+            input += (char)('0' + (e.keyCode - KeyCode.Alpha0));
+        if (e.keyCode >= KeyCode.Keypad0 && e.keyCode <= KeyCode.Keypad9)
+            input += (char)('0' + (e.keyCode - KeyCode.Keypad0));
+        if (e.keyCode == KeyCode.Period)
+            input += '.';
+        if (e.keyCode == KeyCode.Comma)
+            input += ',';
+        // backspace
+        if (e.keyCode == KeyCode.Backspace)
+        {
+            if (input.Length > 0)
+                input = input.Substring(0, input.Length - 1);
+        }
+
+        e.Use();
+    }
+
+    public static bool TriggerOn(Event e, KeyCode k) {
+        return e.type == EventType.KeyDown
+        && e.keyCode == k
+        && Selection.transforms.Length > 0
+        && !e.alt;
+    }
+
+    public static Vector3 AbsVector(Vector3 v) {
+        return new Vector3(Mathf.Abs(v.x), Mathf.Abs(v.y), Mathf.Abs(v.z));
+    }
+
+    public static Vector3 ScalePointAbout(Vector3 point, Vector3 pivot, float scale, Vector3 mask)
+    {
+        var delta = point - pivot;
+        delta *= scale;
+        delta = pivot + delta - point;
+        delta = Vector3.Scale(delta, mask);
+        return point + delta;
     }
 }

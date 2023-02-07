@@ -12,13 +12,12 @@ public enum MoveMode
     Axis
 }
 
-public class TransformTool : IStateTool
+public abstract class TransformTool : IStateTool
 {
     const float preciseFactor = 0.1f;
 
-    public virtual Predicate<Event> trigger => throw new NotImplementedException();
+    public abstract Predicate<Event> trigger { get; }
 
-    protected Vector3[] initial;
     protected Vector3 point;
     protected Vector3 start;
 
@@ -29,8 +28,10 @@ public class TransformTool : IStateTool
     protected string input = "";
 
     protected Vector3[] activeOrientation;
-
+    protected Vector3[] initialPosition;
     protected Quaternion[] initialRotation;
+    protected Vector3[] initialScale;
+    protected Vector3 planeNormal;
 
     bool mmb;
 
@@ -41,20 +42,27 @@ public class TransformTool : IStateTool
     protected Vector2 mouseDelta;
 
     protected MoveMode mode;
+    protected bool swap;
+    protected bool snap;
+    protected bool local;
 
-    protected Vector3 planeNormal;
-    protected bool swap = false;
+    protected Transform[] transforms;
+    protected Transform active;
+
 
     public void Start()
     {
-        var transforms = Selection.transforms;
+        active = Selection.activeTransform;
+        transforms = Selection.transforms;
 
-        initial = new Vector3[transforms.Length];
+        initialPosition = new Vector3[transforms.Length];
         initialRotation = new Quaternion[transforms.Length];
+        initialScale = new Vector3[transforms.Length];
         for (int i = 0; i < transforms.Length; i++)
         {
-            initial[i] = transforms[i].transform.position;
+            initialPosition[i] = transforms[i].transform.position;
             initialRotation[i] = transforms[i].transform.rotation;
+            initialScale[i] = transforms[i].transform.localScale;
         }
         point = Selection.activeTransform.position;
 
@@ -65,7 +73,7 @@ public class TransformTool : IStateTool
         mask = null;
 
         gizmos.point = point;
-        gizmos.points = initial;
+        gizmos.points = initialPosition;
 
         activeOrientation = new Vector3[] {
             Selection.activeTransform.right,
@@ -89,10 +97,13 @@ public class TransformTool : IStateTool
 
         Continuous(sceneView, e);
 
-        var transforms = Selection.transforms;
-
         delta = GetPlanePosition(point, startMouse + mouseDelta) - start;
         gizmos.delta = delta;
+
+        snap = e.control;
+
+        local = Tools.pivotRotation == PivotRotation.Local;
+        local = swap ^ local;
 
         // mmb down
         if (e.type == EventType.MouseDown && e.button == 2)
@@ -136,6 +147,15 @@ public class TransformTool : IStateTool
 
         Letters();
         AppendEvent(e, ref input);
+    }
+
+    public void AfterUpdate()
+    {
+        if(input.Length == 1 && (input[0] == '.' || input[0] == ','))
+        {
+            return;
+        }
+        if(input != "") Numerical(float.Parse(input));
     }
 
     private static void Continuous(SceneView sceneView, Event e)
@@ -197,11 +217,36 @@ public class TransformTool : IStateTool
     public virtual void Perform()
     {
         gizmos.show = false;
+
+        var transforms = Selection.transforms;
+        for (int i = 0; i < transforms.Length; i++)
+        {
+            var newPosition = transforms[i].position;
+            var newRotation = transforms[i].rotation;
+            var newScale = transforms[i].localScale;
+            transforms[i].position = initialPosition[i];
+            transforms[i].rotation = initialRotation[i];
+            transforms[i].localScale = initialScale[i];
+            Undo.RecordObject(transforms[i], "Transform");
+            transforms[i].position = newPosition;
+            transforms[i].rotation = newRotation;
+            transforms[i].localScale = newScale;
+        }
+
+        Undo.FlushUndoRecordObjects();
     }
 
     public virtual void Cancel()
     {
         gizmos.show = false;
+
+        var transforms = Selection.transforms;
+        for (int i = 0; i < transforms.Length; i++)
+        {
+            transforms[i].position = initialPosition[i];
+            transforms[i].rotation = initialRotation[i];
+            transforms[i].localScale = initialScale[i];
+        }
     }
 
     public void Letters()
@@ -252,13 +297,22 @@ public class TransformTool : IStateTool
         }
     }
 
-    public bool Key(KeyCode key)
-    {
-        if (Event.current.type == EventType.KeyDown && Event.current.keyCode == key)
-        {
-            Event.current.Use();
-            return true;
+    protected Vector3? pivot {
+        get {
+            switch (PivotDropdown.pivotMode)
+            {
+                case PivotMode.Median:
+                    var mean = Vector3.zero;
+                    foreach (var p in initialPosition)
+                        mean += p;
+                    return mean / Selection.transforms.Length;
+                case PivotMode.Cursor:
+                    return Cursor.position;
+                default:
+                    return null;
+            }
         }
-        return false;
     }
+
+    public abstract void Numerical(float input);
 }

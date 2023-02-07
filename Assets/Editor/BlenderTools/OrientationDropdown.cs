@@ -6,8 +6,8 @@ using UnityEngine;
 
 public enum PivotMode
 {
-    Local,
-    Global,
+    Median,
+    Individual,
     Cursor
 }
 
@@ -16,7 +16,7 @@ class PivotDropdown : EditorToolbarDropdown
 {
     public const string id = "PivotToolBar/Dropdown";
 
-    public static PivotMode pivotMode = PivotMode.Local;
+    public static PivotMode pivotMode = PivotMode.Median;
 
     public static void CycleMode() {
         pivotMode = (PivotMode)(((int)pivotMode + 1) % Enum.GetNames(typeof(PivotMode)).Length);
@@ -39,10 +39,10 @@ class PivotDropdown : EditorToolbarDropdown
     {
         switch (pivotMode)
         {
-            case PivotMode.Local:
+            case PivotMode.Individual:
                 icon = EditorGUIUtility.IconContent("d_ToolHandleLocal").image as Texture2D;
                 break;
-            case PivotMode.Global:
+            case PivotMode.Median:
                 icon = EditorGUIUtility.IconContent("d_ToolHandleGlobal").image as Texture2D;
                 break;
             case PivotMode.Cursor:
@@ -54,8 +54,8 @@ class PivotDropdown : EditorToolbarDropdown
     void ShowDropdown()
     {
         var menu = new GenericMenu();
-        menu.AddItem(new GUIContent("Local"), pivotMode == PivotMode.Local, () => { pivotMode = PivotMode.Local; onChange?.Invoke(); });
-        menu.AddItem(new GUIContent("Global"), pivotMode == PivotMode.Global, () => { pivotMode = PivotMode.Global; onChange?.Invoke(); });
+        menu.AddItem(new GUIContent("Individual"), pivotMode == PivotMode.Individual, () => { pivotMode = PivotMode.Individual; onChange?.Invoke(); });
+        menu.AddItem(new GUIContent("Median Point"), pivotMode == PivotMode.Median, () => { pivotMode = PivotMode.Median; onChange?.Invoke(); });
         menu.AddItem(new GUIContent("Cursor"), pivotMode == PivotMode.Cursor, () => { pivotMode = PivotMode.Cursor; onChange?.Invoke(); });
         menu.ShowAsContext();
     }
