@@ -70,7 +70,7 @@ public class MoveTool : TransformTool
                     }
 
                     var t = transforms[j];
-                    t.position = initial[j] + Snap(m * axisDelta);
+                    t.position = initial[j] + m * Snap(axisDelta);
                 }
                 break;
             case MoveMode.Plane:
@@ -90,7 +90,7 @@ public class MoveTool : TransformTool
                 for (int j = 0; j < transforms.Length; j++)
                 {
                     var t = transforms[j];
-                    t.position = initial[j] + Snap(t.rotation * planeDelta);
+                    t.position = initial[j] + t.rotation * Snap(planeDelta);
                 }
                 
                 break;
@@ -148,6 +148,15 @@ public class MoveTool : TransformTool
     Vector3 Snap(Vector3 point) {
         if(!snap) return point;
         var moveSnap = EditorSnapSettings.move;
+        point = Snapping.Snap(point, moveSnap);
+        return point;
+    }
+
+    float Snap(float point) {
+        if(!snap) return point;
+        var moveSnap = EditorSnapSettings.move.x;
+        if(mask == Vector3.up) moveSnap = EditorSnapSettings.move.y;
+        if(mask == Vector3.forward) moveSnap = EditorSnapSettings.move.z;
         point = Snapping.Snap(point, moveSnap);
         return point;
     }
