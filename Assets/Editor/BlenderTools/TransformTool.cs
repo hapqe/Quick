@@ -332,5 +332,7 @@ public abstract class TransformTool : IStateTool
         }
     }
 
+    public abstract Action triggerAgain { get; }
+
     public abstract void Numerical(float input);
 }

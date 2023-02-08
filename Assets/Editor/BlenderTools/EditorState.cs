@@ -6,6 +6,7 @@ using System;
 
 public interface IStateTool {
     Predicate<Event> trigger { get; }
+    Action triggerAgain { get; }
     void Start();
     void Update(SceneView sceneView);
     void AfterUpdate();
@@ -29,7 +30,7 @@ public static class EditorState
         Event e = Event.current;
 
         if(active == null) {
-            // keydown
+            // check for trigger
             if(e.type == EventType.KeyDown) {
                 foreach(var tool in tools) {
                     if(tool.trigger(e)) {
@@ -41,6 +42,15 @@ public static class EditorState
             }
         }
         else {
+            // trigger twice
+            if(e.type == EventType.KeyDown) {
+                foreach(var tool in tools) {
+                    if(tool.trigger(e)) {
+                        active.triggerAgain.Invoke();
+                    }
+                }
+            }
+            
             // setting control, so events like lmb are not forwarded to the scene
             var id = GUIUtility.GetControlID(active.GetHashCode(), FocusType.Passive);
             if(e.type == EventType.Layout)

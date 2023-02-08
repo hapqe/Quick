@@ -9,6 +9,8 @@ public class MoveTool : TransformTool
 {
     public override Predicate<Event> trigger => e => TriggerOn(e, KeyCode.G);
 
+    public override Action triggerAgain => () => {};
+
     Vector2 scaledMouseDelta;
 
     static MoveTool()

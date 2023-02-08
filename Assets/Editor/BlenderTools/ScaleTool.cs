@@ -9,6 +9,7 @@ using Gizmos = TransformToolGizmos;
 public class ScaleTool : TransformTool
 {
     public override Predicate<Event> trigger => e => TriggerOn(e, KeyCode.S);
+    public override Action triggerAgain => () => {};
 
     Vector2 startDir;
 
