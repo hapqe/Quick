@@ -41,8 +41,12 @@ public static class EditorState
             }
         }
         else {
+            // setting control, so events like lmb are not forwarded to the scene
+            var id = GUIUtility.GetControlID(active.GetHashCode(), FocusType.Passive);
+            if(e.type == EventType.Layout)
+                HandleUtility.AddDefaultControl(id);
             // lmb or enter
-            if(e.type == EventType.MouseDown && e.button == 0 || e.type == EventType.KeyDown && e.keyCode == KeyCode.Return) {
+            if(e.type == EventType.MouseUp && e.button == 0 || e.type == EventType.KeyDown && e.keyCode == KeyCode.Return) {
                 e.Use();
                 
                 active.Perform();

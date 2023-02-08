@@ -12,6 +12,8 @@ public class ScaleTool : TransformTool
 
     Vector2 startDir;
 
+    Vector3[] initialSigns;
+
     float sign;
 
     float multiplier;
@@ -27,6 +29,12 @@ public class ScaleTool : TransformTool
         Gizmos.showMouse = true;
 
         multiplier = 1;
+
+        initialSigns = new Vector3[transforms.Length];
+        for (int i = 0; i < transforms.Length; i++)
+        {
+            initialSigns[i] = SignVector(initialScale[i]);
+        }
     }
 
     public override void Update(SceneView sceneView)
@@ -38,6 +46,11 @@ public class ScaleTool : TransformTool
         var original = (startMouse - startTransformMouse).magnitude;
         var absDiff = startMouse - startTransformMouse + mouseDelta;
         sign = Mathf.Sign(Vector3.Dot(absDiff, startDir));
+
+        if(float.TryParse(input, out var x)) {
+            sign *= Mathf.Sign(x);
+        }
+        
 
         var mouse = startMouse - startTransformMouse + mouseDelta;
         var lastMultiplier = multiplier;
@@ -61,14 +74,15 @@ public class ScaleTool : TransformTool
         
         Vector3 diff;
         
-        if (local)
+        if (local || mask == null)
         {
             diff = initial * scale - initial;
             diff = Vector3.Scale(diff, m);
             t.localScale = initial + diff;
             inverse = t.rotation * inverse;
             t.localScale = AbsVector(t.localScale);
-            t.localScale = Vector3.Scale(t.localScale, SignVector(m, sign));
+            var signed = Vector3.Scale(initialSigns[i], SignVector(m, sign));
+            t.localScale = Vector3.Scale(t.localScale, signed);
         }
         else
         {
@@ -77,10 +91,12 @@ public class ScaleTool : TransformTool
             diff = initial * Mathf.Abs(scale) - initial;
             diff = Vector3.Scale(diff, m);
             t.localScale = initial + diff;
-            t.localScale = Vector3.Scale(t.localScale, SignVector(mask ?? Vector3.one, sign));
+            var signed = Vector3.Scale(initialSigns[i], SignVector(mask ?? Vector3.one, sign));
+            t.localScale = Vector3.Scale(t.localScale, signed);
         }
 
-        OffsetTransform(t, initialPosition[i], scale, inverse);
+        if(mask == null) inverse = Vector3.one;
+        OffsetTransform(t, initialPosition[i], Mathf.Abs(scale) * sign, inverse);
     }
 
     void OffsetTransform(Transform t, Vector3 initial, float scale, Vector3 mask)

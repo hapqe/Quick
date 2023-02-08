@@ -323,7 +323,7 @@ public abstract class TransformTool : IStateTool
                     var mean = Vector3.zero;
                     foreach (var p in initialPosition)
                         mean += p;
-                    return mean / Selection.transforms.Length;
+                    return mean / transforms.Length;
                 case PivotMode.Cursor:
                     return Cursor.position;
                 default:

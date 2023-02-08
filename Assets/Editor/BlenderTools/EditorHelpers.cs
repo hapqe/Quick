@@ -171,6 +171,13 @@ public static class EditorHelpers
         delta = Vector3.Scale(delta, mask);
         return point + delta;
     }
+    public static Vector3 SignVector(Vector3 v) {
+        return new Vector3(
+            Mathf.Sign(v.x),
+            Mathf.Sign(v.y),
+            Mathf.Sign(v.z)
+        );
+    }
 
     public static Vector3 SignVector(Vector3 mask, float sign) {
         return new Vector3(
