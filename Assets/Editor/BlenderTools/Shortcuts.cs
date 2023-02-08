@@ -6,7 +6,7 @@ using static EditorHelpers;
 
 public static class Shortcuts
 {
-    [MenuItem("Edit/Reset Position &g")]
+    [MenuItem("BlenderTools/Transform/Reset Position &g")]
     static void ResetPosition()
     {
         var selection = Selection.gameObjects;
@@ -20,7 +20,7 @@ public static class Shortcuts
         Collapse();
     }
 
-    [MenuItem("Edit/Reset Rotation &r")]
+    [MenuItem("BlenderTools/Transform/Reset Rotation &r")]
     static void ResetRotation()
     {
         var selection = Selection.gameObjects;
@@ -34,7 +34,7 @@ public static class Shortcuts
         Collapse();
     }
 
-    [MenuItem("Edit/Reset Scale &s")]
+    [MenuItem("BlenderTools/Transform/Reset Scale &s")]
     static void ResetScale()
     {
         var selection = Selection.gameObjects;
@@ -48,9 +48,9 @@ public static class Shortcuts
         Collapse();
     }
 
-    [MenuItem("Edit/Cycle Pivot &x")]
+    [MenuItem("BlenderTools/Transform/Cycle Pivot Mode")]
     static void CyclePivot()
     {
-        PivotDropdown.CycleMode();
+        Pivot.CycleMode();
     }
 }

@@ -1,15 +1,12 @@
 using System;
 using UnityEditor;
 using UnityEngine;
-using static EditorState;
 using static EditorHelpers;
 using Gizmos = TransformToolGizmos;
 
-[InitializeOnLoad]
-public class ScaleTool : TransformTool
+class ScaleTool : TransformTool<ScaleTool>
 {
-    public override Predicate<Event> trigger => e => TriggerOn(e, KeyCode.S);
-    public override Action triggerAgain => () => {};
+    internal override Action again => () => {};
 
     Vector2 startDir;
 
@@ -18,12 +15,8 @@ public class ScaleTool : TransformTool
     float sign;
 
     float multiplier;
-    static ScaleTool()
-    {
-        tools.Add(new ScaleTool());
-    }
 
-    public override void Start() {
+    internal override void Start() {
         base.Start();
 
         startDir = startMouse - startTransformMouse;
@@ -38,7 +31,7 @@ public class ScaleTool : TransformTool
         }
     }
 
-    public override void Update(SceneView sceneView)
+    internal override void Update(SceneView sceneView)
     {
         base.Update(sceneView);
 
@@ -110,7 +103,7 @@ public class ScaleTool : TransformTool
         t.position = ScalePointAbout(initial, (Vector3)pivot, scale, mask);
     }
 
-    public override void Numerical(float input)
+    internal override void Numerical(float input)
     {
         for (int i = 0; i < transforms.Length; i++)
         {
@@ -124,4 +117,7 @@ public class ScaleTool : TransformTool
         var s = EditorSnapSettings.scale * precise;
         return Snapping.Snap(input, s);
     }
+
+    [MenuItem("BlenderTools/Transform/Scale Tool")]
+    static void Use() => MakeActive();
 }

@@ -18,7 +18,7 @@ public static class Cursor
         CursorGizmos.Draw();
 
         Event e = Event.current;
-        if(!e.shift || EditorState.active != null) return;
+        if(!e.shift || EditorState.active) return;
         
         // shift-lmb
         if ((e.type == EventType.MouseDown || e.type == EventType.MouseDrag) && e.button == 1)
@@ -60,9 +60,11 @@ public static class Cursor
                 }
             }
         };
-
-        // shift-c
-        if(e.keyCode == KeyCode.C)
-            position = Vector3.zero;
     }
+
+    [MenuItem("BlenderTools/3D-Cursor/Reset")]
+    static void ResetPosition()
+    {
+        position = Vector3.zero;
+    } 
 }

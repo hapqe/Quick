@@ -1,55 +1,51 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using System;
 
-public interface IStateTool {
-    Predicate<Event> trigger { get; }
-    Action triggerAgain { get; }
-    void Start();
-    void Update(SceneView sceneView);
-    void AfterUpdate();
-    void Perform();
-    void Cancel();
-    void Numerical(float input);
+
+public static class EditorState {
+    public static bool active { get; internal set; }
 }
-
-[InitializeOnLoad]
-public static class EditorState
-{
-    public static IStateTool active { get; private set; } = null;
-    public static List<IStateTool> tools = new List<IStateTool>();
-    static EditorState()
-    {
-        SceneView.duringSceneGui += OnScene;
-    }
-
-    private static void OnScene(SceneView sceneView)
-    {
-        Event e = Event.current;
-
-        if(active == null) {
-            // check for trigger
-            if(e.type == EventType.KeyDown) {
-                foreach(var tool in tools) {
-                    if(tool.trigger(e)) {
-                        active = tool;
-                        active.Start();
-                        break;
-                    }
-                }
-            }
+abstract class StateTool<T> where T : StateTool<T> {
+    internal static StateTool<T> active { get; set; }
+    internal static void MakeActive() {
+        if(active == null){
+            var a = (T)Activator.CreateInstance(typeof(T));
+            if(!a.Requirements()) return;
+            
+            active = a;
+            EditorState.active = true;
+            SceneView.duringSceneGui += Activate;
         }
-        else {
+    }
+    internal static void Reset() {
+        if(active != null) {
+            SceneView.duringSceneGui -= Perform;
+            EditorState.active = false;
+            active = null;
+        }
+    }
+    internal abstract Action again { get; }
+    internal virtual bool Requirements() => true;
+    internal abstract void Start();
+    internal abstract void Update(SceneView sceneView);
+    internal abstract void AfterUpdate();
+    internal abstract void Perform();
+    internal abstract void Cancel();
+    internal abstract void Numerical(float input);
+
+    public static void Activate(SceneView sceneView) {
+        StateTool<T>.active.Start();
+        SceneView.duringSceneGui += Perform;
+        SceneView.duringSceneGui -= Activate;
+    }
+    public static void Perform(SceneView sceneView)
+    {
+        var e = Event.current;
+        var active = StateTool<T>.active;
+
+        if(active != null) {
             // trigger twice
-            if(e.type == EventType.KeyDown) {
-                foreach(var tool in tools) {
-                    if(tool.trigger(e)) {
-                        active.triggerAgain.Invoke();
-                    }
-                }
-            }
             
             // setting control, so events like lmb are not forwarded to the scene
             var id = GUIUtility.GetControlID(active.GetHashCode(), FocusType.Passive);
@@ -60,6 +56,7 @@ public static class EditorState
                 e.Use();
                 
                 active.Perform();
+                StateTool<T>.Reset();
                 active = null;
                 return;
             }
@@ -68,9 +65,11 @@ public static class EditorState
                 e.Use();
                 
                 active.Cancel();
+                StateTool<T>.Reset();
                 active = null;
                 return;
             }
+
             // update
             active.Update(sceneView);
             active.AfterUpdate();

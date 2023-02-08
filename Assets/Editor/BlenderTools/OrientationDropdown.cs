@@ -12,38 +12,58 @@ public enum PivotMode
 }
 
 [EditorToolbarElement(id, typeof(SceneView))]
-class PivotDropdown : EditorToolbarDropdown
+[InitializeOnLoad]
+class Pivot : EditorToolbarDropdown
 {
+    static Pivot()
+    {
+        Tools.pivotModeChanged += () =>
+        {
+            switch (Tools.pivotMode)
+            {
+                case UnityEditor.PivotMode.Pivot:
+                    mode = PivotMode.Individual;
+                    break;
+                case UnityEditor.PivotMode.Center:
+                    mode = PivotMode.Median;
+                    break;
+            }
+            onChange?.Invoke();
+        };
+    }
     public const string id = "PivotToolBar/Dropdown";
 
-    public static PivotMode pivotMode = PivotMode.Median;
+    public static PivotMode mode = PivotMode.Median;
 
-    public static void CycleMode() {
-        pivotMode = (PivotMode)(((int)pivotMode + 1) % Enum.GetNames(typeof(PivotMode)).Length);
+    public static void CycleMode()
+    {
+        mode = (PivotMode)(((int)mode + 1) % Enum.GetNames(typeof(PivotMode)).Length);
         onChange?.Invoke();
     }
 
     static Action onChange;
 
-    public PivotDropdown()
+    public Pivot()
     {
         text = "Pivot";
         clicked += ShowDropdown;
 
-        onChange += ChangeIcon;
+        onChange += PerformCycle;
 
-        ChangeIcon();
+        PerformCycle();
     }
 
-    private void ChangeIcon()
+    private void PerformCycle()
     {
-        switch (pivotMode)
+        switch (mode)
         {
             case PivotMode.Individual:
                 icon = EditorGUIUtility.IconContent("d_ToolHandleLocal").image as Texture2D;
+                Tools.pivotMode = UnityEditor.PivotMode.Pivot;
                 break;
             case PivotMode.Median:
                 icon = EditorGUIUtility.IconContent("d_ToolHandleGlobal").image as Texture2D;
+                Tools.pivotMode = UnityEditor.PivotMode.Center;
                 break;
             case PivotMode.Cursor:
                 icon = EditorGUIUtility.IconContent("d_Animation.FilterBySelection").image as Texture2D;
@@ -54,9 +74,9 @@ class PivotDropdown : EditorToolbarDropdown
     void ShowDropdown()
     {
         var menu = new GenericMenu();
-        menu.AddItem(new GUIContent("Individual"), pivotMode == PivotMode.Individual, () => { pivotMode = PivotMode.Individual; onChange?.Invoke(); });
-        menu.AddItem(new GUIContent("Median Point"), pivotMode == PivotMode.Median, () => { pivotMode = PivotMode.Median; onChange?.Invoke(); });
-        menu.AddItem(new GUIContent("Cursor"), pivotMode == PivotMode.Cursor, () => { pivotMode = PivotMode.Cursor; onChange?.Invoke(); });
+        menu.AddItem(new GUIContent("Individual Origins"), mode == PivotMode.Individual, () => { mode = PivotMode.Individual; onChange?.Invoke(); });
+        menu.AddItem(new GUIContent("Median Point"), mode == PivotMode.Median, () => { mode = PivotMode.Median; onChange?.Invoke(); });
+        menu.AddItem(new GUIContent("3D-Cursor"), mode == PivotMode.Cursor, () => { mode = PivotMode.Cursor; onChange?.Invoke(); });
         menu.ShowAsContext();
     }
 }
@@ -65,9 +85,6 @@ class PivotDropdown : EditorToolbarDropdown
 [Icon("Assets/Editor/Icons/Cursor.png")]
 public class EditorToolbarExample : ToolbarOverlay
 {
-    EditorToolbarExample() : base(
-PivotDropdown.id
-)
+    EditorToolbarExample() : base(Pivot.id)
     { }
-
 }

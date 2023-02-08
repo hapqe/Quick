@@ -1,15 +1,12 @@
 using System;
 using UnityEditor;
 using UnityEngine;
-using static EditorState;
 using static EditorHelpers;
 using Gizmos = TransformToolGizmos;
 
-[InitializeOnLoad]
-public class RotateTool : TransformTool
+class RotateTool : TransformTool<RotateTool>
 {
-    public override Predicate<Event> trigger => e => TriggerOn(e, KeyCode.R);
-    public override Action triggerAgain => () => gimbal = !gimbal;
+    internal override Action again => () => gimbal = !gimbal;
 
     float angle;
     bool gimbal;
@@ -17,12 +14,7 @@ public class RotateTool : TransformTool
 
     (Vector3, Vector3) gimbalAxes;
 
-    static RotateTool()
-    {
-        tools.Add(new RotateTool());
-    }
-
-    public override void Start()
+    internal override void Start()
     {
         base.Start();
 
@@ -49,7 +41,7 @@ public class RotateTool : TransformTool
         gimbalAxes = (p1 - point, p2 - point);
     }
 
-    public override void Update(SceneView sceneView)
+    internal override void Update(SceneView sceneView)
     {
         base.Update(sceneView);
 
@@ -134,7 +126,7 @@ public class RotateTool : TransformTool
         }
     }
 
-    public override void Numerical(float input)
+    internal override void Numerical(float input)
     {
         angle = input;
     }
@@ -145,4 +137,7 @@ public class RotateTool : TransformTool
         var s = EditorSnapSettings.rotate * precise;
         return Snapping.Snap(input, s);
     }
+
+    [MenuItem("BlenderTools/Transform/Rotate Tool")]
+    static void Use() => MakeActive();
 }

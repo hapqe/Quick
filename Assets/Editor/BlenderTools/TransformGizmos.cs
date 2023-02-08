@@ -40,7 +40,7 @@ public static class TransformToolGizmos
             var c = directions[i + 2];
 
             var point = TransformToolGizmos.point;
-            if (PivotDropdown.pivotMode == PivotMode.Individual)
+            if (Pivot.mode == PivotMode.Individual)
                 point = points[i / 3];
 
             if (showAll)

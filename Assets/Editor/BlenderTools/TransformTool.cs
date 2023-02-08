@@ -13,11 +13,9 @@ public enum MoveMode
     Axis
 }
 
-public abstract class TransformTool : IStateTool
+abstract class TransformTool<T> : StateTool<T> where T : TransformTool<T>
 {
     const float preciseFactor = 0.1f;
-
-    public abstract Predicate<Event> trigger { get; }
 
     protected Vector3 point;
     protected Vector3 start;
@@ -50,11 +48,16 @@ public abstract class TransformTool : IStateTool
     protected bool local;
 
     protected Transform[] transforms;
-    protected Transform active;
+    new protected Transform active;
 
     protected float precise => Event.current.shift ? preciseFactor : 1;
 
-    public virtual void Start()
+    internal override bool Requirements()
+    {
+        return Selection.activeTransform != null && Selection.transforms.Length > 0;
+    }
+
+    internal override void Start()
     {
         active = Selection.activeTransform;
         transforms = Selection.transforms;
@@ -106,7 +109,7 @@ public abstract class TransformTool : IStateTool
         swap = false;
     }
 
-    public virtual void Update(SceneView sceneView)
+    internal override void Update(SceneView sceneView)
     {
         var e = Event.current;
 
@@ -162,7 +165,7 @@ public abstract class TransformTool : IStateTool
         Gizmos.Draw();
     }
 
-    public void AfterUpdate()
+    internal override void AfterUpdate()
     {
         if(float.TryParse(input, out var value))
             Numerical(value);
@@ -226,7 +229,7 @@ public abstract class TransformTool : IStateTool
         Gizmos.directions = directions;
     }
 
-    public virtual void Perform()
+    internal override void Perform()
     {
         Gizmos.show = false;
 
@@ -250,7 +253,7 @@ public abstract class TransformTool : IStateTool
         Gizmos.showMouse = false;
     }
 
-    public virtual void Cancel()
+    internal override void Cancel()
     {
         Gizmos.show = false;
 
@@ -317,7 +320,7 @@ public abstract class TransformTool : IStateTool
 
     protected Vector3? pivot {
         get {
-            switch (PivotDropdown.pivotMode)
+            switch (Pivot.mode)
             {
                 case PivotMode.Median:
                     var mean = Vector3.zero;
@@ -331,8 +334,4 @@ public abstract class TransformTool : IStateTool
             }
         }
     }
-
-    public abstract Action triggerAgain { get; }
-
-    public abstract void Numerical(float input);
 }

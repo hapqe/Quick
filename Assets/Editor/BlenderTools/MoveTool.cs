@@ -1,31 +1,22 @@
 using System;
 using UnityEditor;
 using UnityEngine;
-using static EditorState;
 using static EditorHelpers;
 
-[InitializeOnLoad]
-public class MoveTool : TransformTool
+class MoveTool : TransformTool<MoveTool>
 {
-    public override Predicate<Event> trigger => e => TriggerOn(e, KeyCode.G);
-
-    public override Action triggerAgain => () => {};
-
     Vector2 scaledMouseDelta;
 
-    static MoveTool()
-    {
-        tools.Add(new MoveTool());
-    }
+    internal override Action again => () => { };
 
-    public override void Start()
+    internal override void Start()
     {
         base.Start();
 
         scaledMouseDelta = Vector2.zero;
     }
 
-    public override void Update(SceneView sceneView)
+    internal override void Update(SceneView sceneView)
     {
         base.Update(sceneView);
 
@@ -120,7 +111,7 @@ public class MoveTool : TransformTool
         return point;
     }
 
-    public override void Numerical(float input)
+    internal override void Numerical(float input)
     {
         for (int j = 0; j < transforms.Length; j++)
         {
@@ -132,4 +123,7 @@ public class MoveTool : TransformTool
             t.position = initialPosition[j] + m * input;
         }
     }
+
+    [MenuItem("BlenderTools/Transform/Move Tool")]
+    static void Use() => MakeActive();
 }
