@@ -3,6 +3,7 @@ using UnityEditor;
 using UnityEngine;
 using static EditorState;
 using static EditorHelpers;
+using Gizmos = TransformToolGizmos;
 
 [InitializeOnLoad]
 public class ScaleTool : TransformTool
@@ -13,6 +14,7 @@ public class ScaleTool : TransformTool
 
     float sign;
 
+    float multiplier;
     static ScaleTool()
     {
         tools.Add(new ScaleTool());
@@ -22,6 +24,9 @@ public class ScaleTool : TransformTool
         base.Start();
 
         startDir = startMouse - startTransformMouse;
+        Gizmos.showMouse = true;
+
+        multiplier = 1;
     }
 
     public override void Update(SceneView sceneView)
@@ -31,14 +36,18 @@ public class ScaleTool : TransformTool
         var m = this.mask ?? Vector3.one;
 
         var original = (startMouse - startTransformMouse).magnitude;
-        var diff = startMouse - startTransformMouse + mouseDelta;
-        sign = Mathf.Sign(Vector3.Dot(diff, startDir));
+        var absDiff = startMouse - startTransformMouse + mouseDelta;
+        sign = Mathf.Sign(Vector3.Dot(absDiff, startDir));
 
-        var multiplier = sign * diff.magnitude / original;
+        var mouse = startMouse - startTransformMouse + mouseDelta;
+        var lastMultiplier = multiplier;
+        multiplier *= sign * (mouse.magnitude / lastMouse.magnitude);
+        var diff = multiplier - lastMultiplier;
+        multiplier = lastMultiplier + diff * precise;
 
         for (int i = 0; i < transforms.Length; i++)
         {
-            ScaleTransform(multiplier, i);
+            ScaleTransform(Snap(multiplier), i);
         }
     }
 
@@ -52,12 +61,14 @@ public class ScaleTool : TransformTool
         
         Vector3 diff;
         
-        if (local || mode == MoveMode.All)
+        if (local)
         {
             diff = initial * scale - initial;
             diff = Vector3.Scale(diff, m);
             t.localScale = initial + diff;
             inverse = t.rotation * inverse;
+            t.localScale = AbsVector(t.localScale);
+            t.localScale = Vector3.Scale(t.localScale, SignVector(m, sign));
         }
         else
         {
@@ -66,7 +77,7 @@ public class ScaleTool : TransformTool
             diff = initial * Mathf.Abs(scale) - initial;
             diff = Vector3.Scale(diff, m);
             t.localScale = initial + diff;
-            t.localScale = Vector3.Scale(t.localScale, SignVector((Vector3)mask, sign));
+            t.localScale = Vector3.Scale(t.localScale, SignVector(mask ?? Vector3.one, sign));
         }
 
         OffsetTransform(t, initialPosition[i], scale, inverse);
@@ -93,7 +104,7 @@ public class ScaleTool : TransformTool
     public float Snap(float input)
     {
         if(!snap) return input;
-        var s = EditorSnapSettings.scale;
+        var s = EditorSnapSettings.scale * precise;
         return Snapping.Snap(input, s);
     }
 }

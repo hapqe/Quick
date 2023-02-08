@@ -32,16 +32,6 @@ public static class EditorHelpers
     public static bool IsLetterOrNumber(KeyCode key) {
         return IsLetter(key) || IsNumber(key);
     }
-    
-    public static T GetDrawer<T>() where T : MonoBehaviour, IGizmosDrawer {
-        var drawer = Object.FindObjectOfType<T>();
-        if(drawer == null) {
-            drawer = new GameObject(nameof(T)).AddComponent<T>();
-            drawer.transform.hideFlags = HideFlags.HideInHierarchy;
-        }
-        SceneVisibilityManager.instance.DisablePicking(drawer.gameObject, true);
-        return drawer;
-    }
 
     public static Vector3 GetMask(Event e, Vector3 delta, Vector3 pos, Vector3[] orientation, out MoveMode mode, out Vector3 normal)
     {
@@ -165,7 +155,8 @@ public static class EditorHelpers
         return e.type == EventType.KeyDown
         && e.keyCode == k
         && Selection.transforms.Length > 0
-        && !e.alt;
+        && !e.alt
+        && !e.control;
     }
 
     public static Vector3 AbsVector(Vector3 v) {
@@ -187,5 +178,13 @@ public static class EditorHelpers
             mask.y == 0 ? 1 : sign,
             mask.z == 0 ? 1 : sign
         );
+    }
+
+    public static Vector3 Median(Transform[] transforms) {
+        var median = Vector3.zero;
+        foreach(var t in transforms)
+            median += t.position;
+        median /= transforms.Length;
+        return median;
     }
 }

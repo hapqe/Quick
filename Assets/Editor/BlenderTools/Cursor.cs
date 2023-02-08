@@ -15,13 +15,11 @@ public static class Cursor
 
     private static void OnScene(SceneView sceneview)
     {
+        CursorGizmos.Draw();
+
         Event e = Event.current;
         if(!e.shift || EditorState.active != null) return;
         
-        EditorHelpers.GetDrawer<CursorGizmos>().transform.position = position;
-        EditorHelpers.GetDrawer<CursorGizmos>().scale = .7f / sceneview.position.width * 1000f;
-        
-
         // shift-lmb
         if ((e.type == EventType.MouseDown || e.type == EventType.MouseDrag) && e.button == 1)
         {

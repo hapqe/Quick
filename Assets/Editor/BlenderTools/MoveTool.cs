@@ -9,9 +9,18 @@ public class MoveTool : TransformTool
 {
     public override Predicate<Event> trigger => e => TriggerOn(e, KeyCode.G);
 
+    Vector2 scaledMouseDelta;
+
     static MoveTool()
     {
         tools.Add(new MoveTool());
+    }
+
+    public override void Start()
+    {
+        base.Start();
+
+        scaledMouseDelta = Vector2.zero;
     }
 
     public override void Update(SceneView sceneView)
@@ -24,12 +33,16 @@ public class MoveTool : TransformTool
             m = active.rotation * m;
         }
 
+        var mouse = startMouse - startTransformMouse + mouseDelta;
+        scaledMouseDelta += (mouse - lastMouse) * precise;
+
         switch (mode)
         {
             case MoveMode.All:
                 for (int j = 0; j < transforms.Length; j++)
                 {
                     var t = transforms[j];
+                    var delta = GetPlanePosition(point, startMouse + scaledMouseDelta) - start;
                     t.position = initialPosition[j] + Snap(delta);
                 }
                 break;
@@ -38,7 +51,7 @@ public class MoveTool : TransformTool
                 var n = Vector3.ProjectOnPlane(c - point, m).normalized;
                 var i = Plane(n, startTransformMouse);
 
-                var now = Plane(n, startTransformMouse + mouseDelta);
+                var now = Plane(n, startTransformMouse + scaledMouseDelta);
 
                 var axisDelta = Vector3.Dot(now - i, m);
 
@@ -63,7 +76,7 @@ public class MoveTool : TransformTool
                 
                 i = Plane(n, startTransformMouse);
 
-                now = Plane(n, startTransformMouse + mouseDelta);
+                now = Plane(n, startTransformMouse + scaledMouseDelta);
 
                 var planeDelta = now - i;
                 planeDelta = Quaternion.Inverse(active.rotation) * planeDelta;
@@ -71,7 +84,7 @@ public class MoveTool : TransformTool
                 for (int j = 0; j < transforms.Length; j++)
                 {
                     var t = transforms[j];
-                    t.position = initialPosition[j] + t.rotation * Snap(planeDelta);
+                    t.position = initialPosition[j] + Snap(planeDelta);
                 }
                 
                 break;
@@ -89,7 +102,7 @@ public class MoveTool : TransformTool
     Vector3 Snap(Vector3 point) {
         if(!snap) return point;
         var moveSnap = EditorSnapSettings.move;
-        point = Snapping.Snap(point, moveSnap);
+        point = Snapping.Snap(point, moveSnap * precise);
         return point;
     }
 
@@ -101,7 +114,7 @@ public class MoveTool : TransformTool
         if(mask == Vector3.up) moveSnap = m.y;
         if(mask == Vector3.forward) moveSnap = m.z;
 
-        point = Snapping.Snap(point, moveSnap);
+        point = Snapping.Snap(point, moveSnap * precise);
         return point;
     }
 

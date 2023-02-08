@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using static EditorHelpers;
+using Gizmos = TransformToolGizmos;
 
 public enum MoveMode
 {
@@ -21,25 +22,27 @@ public abstract class TransformTool : IStateTool
     protected Vector3 point;
     protected Vector3 start;
 
-    protected Vector3 delta;
+    private Vector3 delta;
 
     protected Vector3[] directions;
     protected Vector3? mask;
     protected string input = "";
 
+    protected bool inputValid { get => float.TryParse(input, out _); }
+
     protected Vector3[] activeOrientation;
     protected Vector3[] initialPosition;
     protected Quaternion[] initialRotation;
     protected Vector3[] initialScale;
+    protected Vector3[] initialDirections;
     protected Vector3 planeNormal;
 
     bool mmb;
 
-    protected TransformGizmos gizmos { get => EditorHelpers.GetDrawer<TransformGizmos>(); }
-
     protected Vector2 startMouse;
     protected Vector2 startTransformMouse;
     protected Vector2 mouseDelta;
+    protected Vector2 lastMouse;
 
     protected MoveMode mode;
     protected bool swap;
@@ -49,6 +52,7 @@ public abstract class TransformTool : IStateTool
     protected Transform[] transforms;
     protected Transform active;
 
+    protected float precise => Event.current.shift ? preciseFactor : 1;
 
     public virtual void Start()
     {
@@ -58,22 +62,32 @@ public abstract class TransformTool : IStateTool
         initialPosition = new Vector3[transforms.Length];
         initialRotation = new Quaternion[transforms.Length];
         initialScale = new Vector3[transforms.Length];
+        var dirs = new List<Vector3>();
         for (int i = 0; i < transforms.Length; i++)
         {
             initialPosition[i] = transforms[i].transform.position;
             initialRotation[i] = transforms[i].transform.rotation;
             initialScale[i] = transforms[i].transform.localScale;
+            dirs.AddRange(new Vector3[] {
+                transforms[i].right,
+                transforms[i].up,
+                transforms[i].forward
+            });
         }
-        point = Selection.activeTransform.position;
+        initialDirections = dirs.ToArray();
+
+        median = Median(transforms);
+
+        point = pivot ?? median;
 
         start = GetPlanePosition(point, Event.current.mousePosition);
 
-        gizmos.showAll = false;
+        Gizmos.showAll = false;
 
         mask = null;
 
-        gizmos.point = point;
-        gizmos.points = initialPosition;
+        Gizmos.point = point;
+        Gizmos.points = initialPosition;
 
         activeOrientation = new Vector3[] {
             Selection.activeTransform.right,
@@ -86,6 +100,7 @@ public abstract class TransformTool : IStateTool
         startTransformMouse = HandleUtility.WorldToGUIPoint(point);
         startMouse = Event.current.mousePosition;
         mouseDelta = Vector2.zero;
+        lastMouse = startMouse - startTransformMouse;
 
         mode = MoveMode.All;
         swap = false;
@@ -98,7 +113,7 @@ public abstract class TransformTool : IStateTool
         Continuous(sceneView, e);
 
         delta = GetPlanePosition(point, startMouse + mouseDelta) - start;
-        gizmos.delta = delta;
+        Gizmos.delta = delta;
 
         snap = e.control;
 
@@ -120,13 +135,13 @@ public abstract class TransformTool : IStateTool
             e.Use();
         }
 
-        gizmos.showAll = mmb;
+        Gizmos.showAll = mmb;
 
         if (e.type != EventType.Layout || e.type != EventType.Repaint)
             if (mmb)
             {
-                gizmos.show = true;
-                gizmos.showAll = true;
+                Gizmos.show = true;
+                Gizmos.showAll = true;
 
                 var global = Tools.pivotRotation == PivotRotation.Global;
 
@@ -134,25 +149,25 @@ public abstract class TransformTool : IStateTool
 
                 mask = GetMask(e, delta, point, activeOrientation, out mode, out planeNormal);
 
-                gizmos.mask = mask;
+                Gizmos.mask = mask;
             }
 
-        var precise = e.shift;
-
-        var d = e.delta * (precise ? preciseFactor : 1);
-
         var screen = LogicalRect(Camera.current.pixelRect);
-        if (Math.Abs(d.x) < screen.width - 50 && Math.Abs(d.y) < screen.height - 50)
-            mouseDelta += d;
+        if (Math.Abs(e.delta.x) < screen.width - 50 && Math.Abs(e.delta.y) < screen.height - 50)
+            mouseDelta += e.delta;
 
         Letters();
         AppendEvent(e, ref input);
+
+        Gizmos.Draw();
     }
 
     public void AfterUpdate()
     {
         if(float.TryParse(input, out var value))
             Numerical(value);
+
+        lastMouse = startMouse - startTransformMouse + mouseDelta;
     }
 
     private static void Continuous(SceneView sceneView, Event e)
@@ -202,18 +217,18 @@ public abstract class TransformTool : IStateTool
             }
             else
             {
-                directions[i * 3 + 0] = t.right;
-                directions[i * 3 + 1] = t.up;
-                directions[i * 3 + 2] = t.forward;
+                directions[i * 3 + 0] = initialDirections[i * 3 + 0];
+                directions[i * 3 + 1] = initialDirections[i * 3 + 1];
+                directions[i * 3 + 2] = initialDirections[i * 3 + 2];
             }
         }
 
-        gizmos.directions = directions;
+        Gizmos.directions = directions;
     }
 
     public virtual void Perform()
     {
-        gizmos.show = false;
+        Gizmos.show = false;
 
         var transforms = Selection.transforms;
         for (int i = 0; i < transforms.Length; i++)
@@ -231,11 +246,13 @@ public abstract class TransformTool : IStateTool
         }
 
         Undo.FlushUndoRecordObjects();
+
+        Gizmos.showMouse = false;
     }
 
     public virtual void Cancel()
     {
-        gizmos.show = false;
+        Gizmos.show = false;
 
         var transforms = Selection.transforms;
         for (int i = 0; i < transforms.Length; i++)
@@ -244,6 +261,8 @@ public abstract class TransformTool : IStateTool
             transforms[i].rotation = initialRotation[i];
             transforms[i].localScale = initialScale[i];
         }
+
+        Gizmos.showMouse = false;
     }
 
     public void Letters()
@@ -252,8 +271,8 @@ public abstract class TransformTool : IStateTool
         LimitDirection(GetKey(KeyCode.Y), Vector3.up);
         LimitDirection(GetKey(KeyCode.Z), Vector3.forward);
 
-        gizmos.show = mask != null;
-        gizmos.mask = mask;
+        Gizmos.show = mask != null;
+        Gizmos.mask = mask;
         Directions(Selection.transforms, Tools.pivotRotation == PivotRotation.Global ^ swap);
     }
 
@@ -293,6 +312,8 @@ public abstract class TransformTool : IStateTool
             }
         }
     }
+
+    protected Vector3 median;
 
     protected Vector3? pivot {
         get {
