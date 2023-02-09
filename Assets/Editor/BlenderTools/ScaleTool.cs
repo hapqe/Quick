@@ -6,8 +6,6 @@ using Gizmos = TransformToolGizmos;
 
 class ScaleTool : TransformTool<ScaleTool>
 {
-    internal override Action again => () => {};
-
     Vector2 startDir;
 
     Vector3[] initialSigns;

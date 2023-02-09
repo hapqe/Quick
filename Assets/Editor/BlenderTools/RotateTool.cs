@@ -6,8 +6,6 @@ using Gizmos = TransformToolGizmos;
 
 class RotateTool : TransformTool<RotateTool>
 {
-    internal override Action again => () => gimbal = !gimbal;
-
     float angle;
     bool gimbal;
     Vector2 delta;
@@ -43,6 +41,13 @@ class RotateTool : TransformTool<RotateTool>
 
     internal override void Update(SceneView sceneView)
     {
+        var e = Event.current;
+        if (e.type == EventType.KeyDown && e.keyCode == KeyCode.R)
+        {
+            gimbal = !gimbal;
+            e.Use();
+        }
+        
         base.Update(sceneView);
 
         // r

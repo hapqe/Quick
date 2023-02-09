@@ -12,7 +12,7 @@ abstract class StateTool<T> where T : StateTool<T> {
         if(active == null){
             var a = (T)Activator.CreateInstance(typeof(T));
             if(!a.Requirements()) return;
-            
+
             active = a;
             EditorState.active = true;
             SceneView.duringSceneGui += Activate;
@@ -25,7 +25,6 @@ abstract class StateTool<T> where T : StateTool<T> {
             active = null;
         }
     }
-    internal abstract Action again { get; }
     internal virtual bool Requirements() => true;
     internal abstract void Start();
     internal abstract void Update(SceneView sceneView);
@@ -45,8 +44,6 @@ abstract class StateTool<T> where T : StateTool<T> {
         var active = StateTool<T>.active;
 
         if(active != null) {
-            // trigger twice
-            
             // setting control, so events like lmb are not forwarded to the scene
             var id = GUIUtility.GetControlID(active.GetHashCode(), FocusType.Passive);
             if(e.type == EventType.Layout)

@@ -7,8 +7,6 @@ class MoveTool : TransformTool<MoveTool>
 {
     Vector2 scaledMouseDelta;
 
-    internal override Action again => () => { };
-
     internal override void Start()
     {
         base.Start();
