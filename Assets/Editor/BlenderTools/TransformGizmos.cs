@@ -28,9 +28,8 @@ public static class TransformToolGizmos
 
         if(showAll) {
             var color = Color.white;
-            color.a = .2f;
             Handles.color = color;
-            Handles.DrawLine(point, point + delta);
+            Handles.DrawDottedLine(point, point + delta, 0.5f);
         }
 
         for (int i = 0; i < directions.Length; i += 3)
