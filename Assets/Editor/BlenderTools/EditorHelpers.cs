@@ -3,37 +3,44 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using UnityEditor;
+using UnityEditor.ShortcutManagement;
 using UnityEngine;
 
 public static class EditorHelpers
 {
     const bool flipYZ = true;
-    
-    public static void Record(System.Func<GameObject, Object> action = null) {
+
+    public static void Record(System.Func<GameObject, Object> action = null)
+    {
         action = action ?? (go => go.transform);
         var selection = Selection.gameObjects;
-        foreach(var go in selection) {
+        foreach (var go in selection)
+        {
             Undo.RecordObject(action(go), "Transform");
         }
     }
 
-    public static void Collapse() {
+    public static void Collapse()
+    {
         Undo.CollapseUndoOperations(Undo.GetCurrentGroup());
     }
 
-    public static bool IsLetter(KeyCode key) {
+    public static bool IsLetter(KeyCode key)
+    {
         return key >= KeyCode.A && key <= KeyCode.Z;
     }
 
-    public static bool IsNumber(KeyCode key) {
+    public static bool IsNumber(KeyCode key)
+    {
         return key >= KeyCode.Alpha0 && key <= KeyCode.Alpha9;
     }
 
-    public static bool IsLetterOrNumber(KeyCode key) {
+    public static bool IsLetterOrNumber(KeyCode key)
+    {
         return IsLetter(key) || IsNumber(key);
     }
 
-    public static Vector3 GetMask(Event e, Vector3 delta, Vector3 pos, Vector3[] orientation, out MoveMode mode, out Vector3 normal)
+    public static Vector3 GetMask(Event e, Vector2 delta, Vector3 start, Vector3[] orientation, out TransformMode mode)
     {
         delta.Normalize();
         var global = Tools.pivotRotation == PivotRotation.Global;
@@ -48,9 +55,9 @@ public static class EditorHelpers
         var bestDot = 0f;
         for (int i = 0; i < 3; i++)
         {
-            var center = (Vector2)Camera.current.WorldToScreenPoint(pos);
-            var a = (Vector2)Camera.current.WorldToScreenPoint(pos + axes[i]);
-            var p = (Vector2)Camera.current.WorldToScreenPoint(pos + delta);
+            var center = (Vector2)Camera.current.WorldToScreenPoint(start);
+            var a = (Vector2)Camera.current.WorldToScreenPoint(start + axes[i]);
+            var p = (Vector2)Camera.current.WorldToScreenPoint(start) + delta;
 
             var dot = Mathf.Abs(Vector2.Dot((p - center).normalized, (a - center).normalized));
             if (dot >= bestDot)
@@ -61,28 +68,16 @@ public static class EditorHelpers
         }
 
         var axis = globalAxes[best];
-        normal = axis;
-        if (e.shift) {
-            mode = MoveMode.Plane;
+        if (e.shift)
+        {
+            mode = TransformMode.Plane;
             return Vector3.one - axis;
         }
-        else {
-            mode = MoveMode.Axis;
+        else
+        {
+            mode = TransformMode.Axis;
             return axis;
         }
-    }
-
-    public static Vector3 GetPlanePosition(Vector2 point, Vector2 mouse)
-    {
-        var e = Event.current;
-        var ray = HandleUtility.GUIPointToWorldRay(mouse);
-        var normal = Camera.current.transform.forward;
-        var plane = new Plane(normal, point);
-
-        float dist;
-        plane.Raycast(ray, out dist);
-        var pos = ray.GetPoint(dist);
-        return pos;
     }
 
     public static KeyCode GetKey(KeyCode key)
@@ -121,9 +116,9 @@ public static class EditorHelpers
 
     public static void AppendEvent(Event e, ref string input)
     {
-        if(e.type != EventType.KeyDown)
+        if (e.type != EventType.KeyDown)
             return;
-        
+
         // append to input
         if (e.keyCode >= KeyCode.Alpha0 && e.keyCode <= KeyCode.Alpha9)
             input += (char)('0' + (e.keyCode - KeyCode.Alpha0));
@@ -151,7 +146,8 @@ public static class EditorHelpers
         e.Use();
     }
 
-    public static bool TriggerOn(Event e, KeyCode k) {
+    public static bool TriggerOn(Event e, KeyCode k)
+    {
         return e.type == EventType.KeyDown
         && e.keyCode == k
         && Selection.transforms.Length > 0
@@ -159,7 +155,8 @@ public static class EditorHelpers
         && !e.control;
     }
 
-    public static Vector3 AbsVector(Vector3 v) {
+    public static Vector3 AbsVector(Vector3 v)
+    {
         return new Vector3(Mathf.Abs(v.x), Mathf.Abs(v.y), Mathf.Abs(v.z));
     }
 
@@ -171,7 +168,8 @@ public static class EditorHelpers
         delta = Vector3.Scale(delta, mask);
         return point + delta;
     }
-    public static Vector3 SignVector(Vector3 v) {
+    public static Vector3 SignVector(Vector3 v)
+    {
         return new Vector3(
             Mathf.Sign(v.x),
             Mathf.Sign(v.y),
@@ -179,7 +177,8 @@ public static class EditorHelpers
         );
     }
 
-    public static Vector3 SignVector(Vector3 mask, float sign) {
+    public static Vector3 SignVector(Vector3 mask, float sign)
+    {
         return new Vector3(
             mask.x == 0 ? 1 : sign,
             mask.y == 0 ? 1 : sign,
@@ -187,11 +186,35 @@ public static class EditorHelpers
         );
     }
 
-    public static Vector3 Median(Transform[] transforms) {
+    public static Vector3 Median(Transform[] transforms)
+    {
         var median = Vector3.zero;
-        foreach(var t in transforms)
+        foreach (var t in transforms)
             median += t.position;
         median /= transforms.Length;
         return median;
+    }
+
+    public static Vector3[] TransformDirs(Transform t)
+    {
+        return new Vector3[] {
+            t.right,
+            t.up,
+            t.forward
+        };
+    }
+
+    public static bool TestShortcuts(Event e, IEnumerable<KeyCombination> shortcuts)
+    {
+        if(e.type != EventType.KeyDown) return false;
+        
+        foreach (var shortcut in shortcuts)
+        {
+            if(e.keyCode == shortcut.keyCode && e.control == shortcut.control && e.shift == shortcut.shift && e.alt == shortcut.alt) {
+                e.Use();
+                return true;
+            }
+        }
+        return false;
     }
 }

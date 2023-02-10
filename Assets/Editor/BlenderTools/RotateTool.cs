@@ -6,11 +6,15 @@ using Gizmos = TransformToolGizmos;
 
 class RotateTool : TransformTool<RotateTool>
 {
+    bool trackball;
     float angle;
-    bool gimbal;
-    Vector2 delta;
 
-    (Vector3, Vector3) gimbalAxes;
+    internal override void Again()
+    {
+        base.Again();
+        trackball = !trackball;
+        Gizmos.showMouse = !Gizmos.showMouse;
+    }
 
     internal override void Start()
     {
@@ -18,131 +22,75 @@ class RotateTool : TransformTool<RotateTool>
 
         Gizmos.showMouse = true;
 
-        angle = 0;
-        delta = Vector2.zero;
-        gimbal = false;
-
-        var normal = Camera.current.transform.forward;
-        var plane = new Plane(normal, point);
-        var ray1 = HandleUtility.GUIPointToWorldRay(startTransformMouse + Vector2.right);
-        var ray2 = HandleUtility.GUIPointToWorldRay(startTransformMouse + Vector2.up);
-
-        var p1 = Vector3.zero;
-        var p2 = Vector3.zero;
-
-        if(plane.Raycast(ray1, out var d1))
-            p1 = ray1.GetPoint(d1);
-
-        if(plane.Raycast(ray2, out var d2))
-            p2 = ray2.GetPoint(d2);
-
-        gimbalAxes = (p1 - point, p2 - point);
+        trackball = false;
     }
 
     internal override void Update(SceneView sceneView)
     {
-        var e = Event.current;
-        if (e.type == EventType.KeyDown && e.keyCode == KeyCode.R)
-        {
-            gimbal = !gimbal;
-            e.Use();
-        }
-        
         base.Update(sceneView);
+        
+        var start = HandleUtility.WorldToGUIPoint(point);
+        var v = this.start - start + delta;
+        angle -= Vector2.SignedAngle(v, v + currentDelta);
 
-        // r
-        if (Input.GetKeyDown(KeyCode.R))
-            gimbal = !gimbal;
+        var fwd = point - Camera.current.transform.position;
 
         Vector3 axis;
-
-        var m = this.mask ?? Vector3.one;
-        var fwd = Camera.current.transform.forward;
-
         switch (mode)
         {
-            case MoveMode.All:
+            case TransformMode.All:
                 axis = fwd;
                 break;
-            case MoveMode.Plane:
-                axis = Vector3.one - m;
+            case TransformMode.Plane:
+                axis = Vector3.one - mask;
                 break;
             default:
-                axis = m;
+                axis = mask;
                 break;
         }
-        axis *= Vector3.Dot(fwd, axis) > 0 ? 1 : -1;
 
-        angle -= Vector2.SignedAngle(lastMouse, startMouse - startTransformMouse + mouseDelta) * precise;
-        delta += (startMouse - startTransformMouse + mouseDelta - lastMouse) * precise;
-
-        var a = angle;
-        if(float.TryParse(input, out var n))
-            a = -n;
-
-        a = Snap(a);
-
-        for (int i = 0; i < transforms.Length; i++)
+        for (int i = 0; i < initial.Length; i++)
         {
             var t = transforms[i];
 
-            t.rotation = initialRotation[i];
-            t.position = initialPosition[i];
-
-            if(!gimbal) {
-                if (local && mode != MoveMode.All){
-                    axis = initialRotation[i] * m;
-                    if(transforms[i] == active)
-                        axis *= Vector3.Dot(fwd, axis) > 0 ? 1 : -1;
-                }
-                if (pivot != null)
+            if (trackball)
+            {
+                var normal = Camera.current.transform.forward;
+                var plane = new Plane(normal, point);
+                var ray = HandleUtility.GUIPointToWorldRay(start + currentDelta);
+                if (plane.Raycast(ray, out var distance))
                 {
-                    t.RotateAround((Vector3)pivot, axis, a);
-                }
-                else
-                {
-                    t.Rotate(axis, a);
-                }
-            }
-            else {
-                var (x, y) = gimbalAxes;
-                if (local && mode != MoveMode.All){
-                    x = initialRotation[i] * x;
-                    y = initialRotation[i] * y;
-                    if(transforms[i] == active) {
-                        x *= Vector3.Dot(fwd, x) > 0 ? 1 : -1;
-                        y *= Vector3.Dot(fwd, y) > 0 ? 1 : -1;
+                    var p = ray.GetPoint(distance);
+                    var orth = p - point;
+                    var dir = Vector3.Cross(orth, normal);
+                    if(local && pivot == null) {
+                        dir = Quaternion.Inverse(active.rotation) * dir;
+                        dir = initial[i].rotation * dir;
                     }
-                }
-                if (pivot != null)
-                {
-                    t.RotateAround((Vector3)pivot, x, -delta.y);
-                    t.RotateAround((Vector3)pivot, y, delta.x);
-                }
-                else
-                {
-                    t.Rotate(x, -delta.y, Space.World);
-                    t.Rotate(y, delta.x, Space.World);
+                    t.RotateAround(pivot ?? initial[i].position, dir, currentDelta.magnitude);
                 }
             }
+            else
+            {
+                var l = local && mode != TransformMode.All;
+                var s = Mathf.Sign(Vector3.Dot(fwd, l ? active.rotation * axis : axis));
+                if(l) axis = initial[i].rotation * axis;
+                var q = Quaternion.AngleAxis(angle, axis * s);
+                t.rotation = q * initial[i].rotation;
 
-
-            
+                if(pivot != null) {
+                    t.position = q * (initial[i].position - pivot.Value) + pivot.Value;
+                }
+            }
         }
     }
 
     internal override void Numerical(float input)
     {
-        angle = input;
+        // ...
     }
 
-    float Snap(float input)
-    {
-        if(!snap) return input;
-        var s = EditorSnapSettings.rotate * precise;
-        return Snapping.Snap(input, s);
-    }
-
-    [MenuItem("BlenderTools/Transform/Rotate Tool")]
-    static void Use() => MakeActive();
+    const string menuName = "BlenderTools/Transform/Rotate _r";
+    [MenuItem(menuName)]
+    static void Use() => MakeActive(menuName);
 }

@@ -7,18 +7,19 @@ public static class TransformToolGizmos
 {
     public static bool show;
     public static bool showAll;
-    public static Vector3 delta;
+    public static Vector2 delta;
     public static Vector3[] directions;
-    public static Vector3? mask;
+    public static Vector3 mask;
     public static Vector3 point;
     public static Vector3[] points;
+    public static Vector2 mouse;
     public static bool showMouse;
+    public static Vector3? pivot;
 
     public static void Draw()
     {
         if (showMouse)
         {
-            var mouse = Event.current.mousePosition;
             var worldMouse = HandleUtility.GUIPointToWorldRay(mouse).origin;
             Handles.color = Color.black;
             Handles.DrawDottedLine(point, worldMouse, 2f);
@@ -29,7 +30,13 @@ public static class TransformToolGizmos
         if(showAll) {
             var color = Color.white;
             Handles.color = color;
-            Handles.DrawDottedLine(point, point + delta, 0.5f);
+
+            var cam = Camera.current;
+            var origin = (Vector2)cam.WorldToScreenPoint(point);
+            var offset = (Vector3)(origin + delta);
+            offset.z = 10f;
+
+            Handles.DrawDottedLine(point, cam.ScreenToWorldPoint(offset), 0.5f);
         }
 
         for (int i = 0; i < directions.Length; i += 3)
@@ -38,9 +45,7 @@ public static class TransformToolGizmos
             var b = directions[i + 1];
             var c = directions[i + 2];
 
-            var point = TransformToolGizmos.point;
-            if (Pivot.mode == PivotMode.Individual)
-                point = points[i / 3];
+            var point = pivot ?? points[i / 3];
 
             if (showAll)
             {
