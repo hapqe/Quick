@@ -14,6 +14,8 @@ class MoveTool : TransformTool<MoveTool>
         scaledMouseDelta = Vector2.zero;
     }
 
+    protected override float snap => EditorSnapSettings.move.x;
+
     internal override void Update(SceneView sceneView)
     {
         base.Update(sceneView);
@@ -23,24 +25,30 @@ class MoveTool : TransformTool<MoveTool>
             var t = transforms[i];
             var start = HandleUtility.WorldToGUIPoint(initial[i].position);
             var activeStart = HandleUtility.WorldToGUIPoint(active.position);
+            Vector3 offset = Vector3.zero;
 
             switch (mode)
             {
                 case TransformMode.All:
-                    t.position = Plane(Camera.current.transform.forward, delta + start, initial[i].position);
+                    offset = Plane(Camera.current.transform.forward, delta + start, initial[i].position) - initial[i].position;
+                    offset = Snap(offset);
+                    t.position = initial[i].position + offset;
                     break;
                 case TransformMode.Plane:
                     var axis = Vector3.one - mask;
-                    if (global)
-                        t.position = Plane(axis, delta + start, initial[i].position);
+                    if (global) {
+                        offset = Plane(axis, delta + start, initial[i].position) - initial[i].position;
+                        offset = Snap(offset);
+                    }
                     else
                     {
                         var pos = Plane(active.rotation * axis, delta + activeStart, active.position);
-                        var offset = pos - active.position;
+                        offset = pos - active.position;
                         offset = Quaternion.Inverse(active.rotation) * offset;
+                        offset = Snap(offset);
                         offset = initial[i].rotation * offset;
-                        t.position = initial[i].position + offset;
                     }
+                    t.position = initial[i].position + offset;
                     break;
                 case TransformMode.Axis:
                     var cameraPos = Camera.current.transform.position;
@@ -52,13 +60,15 @@ class MoveTool : TransformTool<MoveTool>
 
                     if (global)
                     {
-                        var offset = p - active.position;
+                        offset = p - active.position;
+                        offset = Snap(offset);
                         t.position = initial[i].position + Vector3.Scale(offset, mask);
                     }
                     else
                     {
-                        var offset = p - active.position;
+                        offset = p - active.position;
                         offset = Quaternion.Inverse(active.rotation) * offset;
+                        offset = Snap(offset);
                         offset = initial[i].rotation * offset;
                         t.position = initial[i].position + Vector3.Project(offset, initial[i].rotation * mask);
                     }

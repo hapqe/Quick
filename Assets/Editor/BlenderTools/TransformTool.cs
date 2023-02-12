@@ -105,7 +105,7 @@ abstract class TransformTool<T> : StateTool<T> where T : TransformTool<T>
 
         Gizmos.delta = absoluteDelta;
         Gizmos.pivot = pivot;
-        Gizmos.mouse = mouse;
+        Gizmos.mouse = absoluteMouse;
 
         local = Tools.pivotRotation == PivotRotation.Local;
         local = swap ^ local;

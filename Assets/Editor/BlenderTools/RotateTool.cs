@@ -8,6 +8,9 @@ class RotateTool : TransformTool<RotateTool>
 {
     bool trackball;
     float angle;
+    Vector3 trackballDiff;
+
+    protected override float snap => EditorSnapSettings.rotate;
 
     internal override void Again()
     {
@@ -31,7 +34,8 @@ class RotateTool : TransformTool<RotateTool>
         
         var start = HandleUtility.WorldToGUIPoint(point);
         var v = this.start - start + delta;
-        angle -= Vector2.SignedAngle(v, v + currentDelta);
+        this.angle -= Vector2.SignedAngle(v, v + currentDelta);
+        var angle = Snap(this.angle);
 
         var fwd = point - Camera.current.transform.position;
 
@@ -67,7 +71,13 @@ class RotateTool : TransformTool<RotateTool>
                         dir = Quaternion.Inverse(active.rotation) * dir;
                         dir = initial[i].rotation * dir;
                     }
+                    t.rotation = Quaternion.Euler(trackballDiff) * initial[i].rotation;
                     t.RotateAround(pivot ?? initial[i].position, dir, currentDelta.magnitude);
+                    trackballDiff = (t.rotation * Quaternion.Inverse(initial[i].rotation)).eulerAngles;
+                    var diff = Snap(trackballDiff);
+                    Debug.Log(new {diff, trackballDiff});
+                    // t.rotation = initial[i].rotation * Quaternion.Euler(diff);
+                    t.rotation = Quaternion.Euler(diff) * initial[i].rotation;
                 }
             }
             else

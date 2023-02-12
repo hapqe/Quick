@@ -19,6 +19,7 @@ abstract class StateTool<T> where T : StateTool<T> {
     protected Vector2 currentDelta { get; private set; }
     protected Vector2 start { get; private set; }
     protected Vector2 mouse { get => start + delta; }
+    protected Vector2 absoluteMouse { get => Event.current.mousePosition; }
     internal static StateTool<T> active { get; set; }
     IEnumerable<KeyCombination> shortcuts;
     internal static void MakeActive(string menuName) {
@@ -166,7 +167,13 @@ abstract class StateTool<T> where T : StateTool<T> {
 
     protected virtual float snap { get => 1; }
     float snapFactor { get => Event.current.control ? snap : 0; }
-    protected float Snap(float v) => Snapping.Snap(v, snapFactor);
-    protected Vector2 Snap(Vector2 v) => Snapping.Snap(v, snapFactor * Vector2.one);
-    protected Vector3 Snap(Vector3 v) => Snapping.Snap(v, snapFactor * Vector3.one);
+    protected float Snap(float v) => Snapping.Snap(v, precise * snapFactor);
+    protected Vector2 Snap(Vector2 v) => Snapping.Snap(v, precise * snapFactor * Vector2.one);
+    protected Vector3 Snap(Vector3 v) => Snapping.Snap(v, precise * snapFactor * Vector3.one);
+    protected Quaternion Snap(Quaternion v) 
+    {
+        var e = v.eulerAngles;
+        e = Snapping.Snap(e, precise * snapFactor * Vector3.one);
+        return Quaternion.Euler(e);
+    }
 }
