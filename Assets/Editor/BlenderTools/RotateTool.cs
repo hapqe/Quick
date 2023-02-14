@@ -8,7 +8,8 @@ class RotateTool : TransformTool<RotateTool>
 {
     bool trackball;
     float angle;
-    Vector3 trackballDiff;
+
+    const float TRACKBALL_STEPS = 1e3f;
 
     protected override float snap => EditorSnapSettings.rotate;
 
@@ -26,6 +27,15 @@ class RotateTool : TransformTool<RotateTool>
         Gizmos.showMouse = true;
 
         trackball = false;
+    }
+
+    Vector3 TrackballDir(Vector2 dir) {
+        var fwd = Camera.current.transform.forward;
+        var plane = new Plane(fwd, point);
+        var start = HandleUtility.WorldToGUIPoint(point);
+        var ray = HandleUtility.GUIPointToWorldRay(start + dir);
+        plane.Raycast(ray, out var dist);
+        return ray.GetPoint(dist) - point;
     }
 
     internal override void Update(SceneView sceneView)
@@ -59,25 +69,16 @@ class RotateTool : TransformTool<RotateTool>
 
             if (trackball)
             {
-                var normal = Camera.current.transform.forward;
-                var plane = new Plane(normal, point);
-                var ray = HandleUtility.GUIPointToWorldRay(start + currentDelta);
-                if (plane.Raycast(ray, out var distance))
+                t.rotation = initial[i].rotation;
+                t.position = initial[i].position;
+                var d = Snap(delta);
+                var up = TrackballDir(Vector2.up);
+                var left = TrackballDir(Vector2.left);
+                
+                for (int j = 0; j < TRACKBALL_STEPS; j++)
                 {
-                    var p = ray.GetPoint(distance);
-                    var orth = p - point;
-                    var dir = Vector3.Cross(orth, normal);
-                    if(local && pivot == null) {
-                        dir = Quaternion.Inverse(active.rotation) * dir;
-                        dir = initial[i].rotation * dir;
-                    }
-                    t.rotation = Quaternion.Euler(trackballDiff) * initial[i].rotation;
-                    t.RotateAround(pivot ?? initial[i].position, dir, currentDelta.magnitude);
-                    trackballDiff = (t.rotation * Quaternion.Inverse(initial[i].rotation)).eulerAngles;
-                    var diff = Snap(trackballDiff);
-                    Debug.Log(new {diff, trackballDiff});
-                    // t.rotation = initial[i].rotation * Quaternion.Euler(diff);
-                    t.rotation = Quaternion.Euler(diff) * initial[i].rotation;
+                    t.RotateAround(point, up, d.x / TRACKBALL_STEPS);
+                    t.RotateAround(point, left, d.y / TRACKBALL_STEPS);
                 }
             }
             else
